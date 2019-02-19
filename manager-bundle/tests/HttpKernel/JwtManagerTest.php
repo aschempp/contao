@@ -17,6 +17,7 @@ use Contao\ManagerBundle\HttpKernel\JwtManager;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class JwtManagerTest extends TestCase
 {
@@ -77,14 +78,16 @@ class JwtManagerTest extends TestCase
 
     public function testClearResponseCookie()
     {
-        $response = new Response();
-        $this->jwtManager->addResponseCookie($response, ['foobar' => 'whatever']);
+        $headerBag = $this->createMock(ResponseHeaderBag::class);
+        $headerBag
+            ->expects($this->once())
+            ->method('clearCookie')
+            ->with(JwtManager::COOKIE_NAME);
 
-        $this->assertNotEmpty($this->getCookieValueFromResponse($response));
+        $response = new Response();
+        $response->headers = $headerBag;
 
         $this->jwtManager->clearResponseCookie($response);
-
-        $this->assertEmpty($this->getCookieValueFromResponse($response));
     }
 
     private function getCookieValueFromResponse(Response $response): ?string
