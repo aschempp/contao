@@ -73,7 +73,7 @@ class JwtManagerTest extends TestCase
         $this->assertArrayHasKey('iat', $result);
         $this->assertArrayHasKey('exp', $result);
         $this->assertArrayHasKey('foobar', $result);
-        $this->assertSAme('whatever', $result['foobar']);
+        $this->assertSame('whatever', $result['foobar']);
     }
 
     public function testClearResponseCookie()
