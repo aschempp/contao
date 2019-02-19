@@ -32,22 +32,22 @@ class JwtManagerTest extends TestCase
 
     public function tearDown()
     {
-        unlink($this->jwtManager->getSecretFile());
+        unlink(sys_get_temp_dir().'/var/jwt_secret');
     }
 
     public function testCreatesSecret()
     {
-        $this->assertFileExists($this->jwtManager->getSecretFile());
+        $this->assertFileExists(sys_get_temp_dir().'/var/jwt_secret');
     }
 
-    public function testParseRequestThrowsException()
+    public function testThrowsExceptionIfThereIsNoCookie()
     {
         $this->expectException(RedirectResponseException::class);
         $request = Request::create('/');
         $this->jwtManager->parseRequest($request);
     }
 
-    public function testParseRequestAndAddResponseCookie()
+    public function testTokenCanBeSetWithoutPayload()
     {
         $response = new Response();
         $this->jwtManager->addResponseCookie($response);
@@ -58,7 +58,10 @@ class JwtManagerTest extends TestCase
 
         $this->assertArrayHasKey('iat', $result);
         $this->assertArrayHasKey('exp', $result);
+    }
 
+    public function testTokenCanBeSetWithPayload()
+    {
         $response = new Response();
         $this->jwtManager->addResponseCookie($response, ['foobar' => 'whatever']);
         $request = Request::create('/');

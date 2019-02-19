@@ -20,15 +20,10 @@ use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class JwtManager
+final class JwtManager
 {
     public const ATTRIBUTE = '_jwtManager';
     public const COOKIE_NAME = '_contao_preview';
-
-    /**
-     * @var string
-     */
-    private $secretFile;
 
     /**
      * @var string
@@ -38,7 +33,7 @@ class JwtManager
     public function __construct(string $projectDir)
     {
         $filesystem = new Filesystem();
-        $secretFile = $this->secretFile = $projectDir.'/var/jwt_secret';
+        $secretFile = $projectDir.'/var/jwt_secret';
 
         if ($filesystem->exists($secretFile)) {
             $this->secret = file_get_contents($secretFile);
@@ -48,11 +43,6 @@ class JwtManager
             $this->secret = bin2hex(random_bytes(32));
             $filesystem->dumpFile($secretFile, $this->secret);
         }
-    }
-
-    public function getSecretFile(): string
-    {
-        return $this->secretFile;
     }
 
     /**
