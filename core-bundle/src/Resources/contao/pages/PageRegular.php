@@ -15,6 +15,8 @@ use Contao\CoreBundle\Util\PackageUtil;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\HttpFoundation\Response;
 
+@trigger_error('Page types are deprecated, use page controllers instead.', E_USER_DEPRECATED);
+
 /**
  * Provide methods to handle a regular front end page.
  *

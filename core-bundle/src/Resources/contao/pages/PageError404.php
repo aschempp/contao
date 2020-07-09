@@ -14,7 +14,7 @@ use Contao\CoreBundle\Exception\ForwardPageNotFoundException;
 use Contao\CoreBundle\Exception\PageNotFoundException;
 use Symfony\Component\HttpFoundation\Response;
 
-@trigger_error('Page types are deprecated, use page route providers instead.', E_USER_DEPRECATED);
+@trigger_error('Page types are deprecated, use page controllers instead.', E_USER_DEPRECATED);
 
 /**
  * Provide methods to handle an error 404 page.
