@@ -15,6 +15,8 @@ use Contao\CoreBundle\Exception\InsufficientAuthenticationException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\UriSigner;
 
+@trigger_error('Page types are deprecated, use page route providers instead.', E_USER_DEPRECATED);
+
 /**
  * Provide methods to handle an error 401 page.
  *

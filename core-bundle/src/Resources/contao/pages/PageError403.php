@@ -14,6 +14,8 @@ use Contao\CoreBundle\Exception\AccessDeniedException;
 use Contao\CoreBundle\Exception\ForwardPageNotFoundException;
 use Symfony\Component\HttpFoundation\Response;
 
+@trigger_error('Page types are deprecated, use page route providers instead.', E_USER_DEPRECATED);
+
 /**
  * Provide methods to handle an error 403 page.
  *

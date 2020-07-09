@@ -26,7 +26,7 @@ class RootPageController extends AbstractController
             throw new \InvalidArgumentException('Invalid page type');
         }
 
-        return $this->redirectToContent($this->getNextPage((int) $pageModel->id));
+        return $this->redirectToContent($this->getNextPage((int) $pageModel->id), [], 303);
     }
 
     private function getNextPage(int $rootPageId): PageModel

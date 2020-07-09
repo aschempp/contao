@@ -13,6 +13,8 @@ namespace Contao;
 use Contao\CoreBundle\Exception\ForwardPageNotFoundException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
+@trigger_error('Page types are deprecated, use page route providers instead.', E_USER_DEPRECATED);
+
 /**
  * Provide methods to handle a forward page.
  *
