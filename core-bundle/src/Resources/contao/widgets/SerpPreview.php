@@ -10,6 +10,9 @@
 
 namespace Contao;
 
+use Contao\CoreBundle\Routing\Page\PageRoute;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+
 /**
  * @property array    $titleFields
  * @property array    $descriptionFields
@@ -119,16 +122,8 @@ EOT;
 		return $model->{$this->aliasField};
 	}
 
-	/**
-	 * @todo Use the router to generate the URL in a future version (see #831)
-	 */
 	private function getUrl(Model $model)
 	{
-		if (!isset($this->url_callback))
-		{
-			throw new \LogicException('No url_callback given');
-		}
-
 		$aliasField = $this->aliasField ?: 'alias';
 		$placeholder = bin2hex(random_bytes(10));
 
@@ -148,7 +143,11 @@ EOT;
 		}
 		else
 		{
-			throw new \LogicException('Please provide the url_callback as callable');
+			$url = System::getContainer()->get('router')->generate(
+				PageRoute::ROUTE_NAME,
+				[PageRoute::CONTENT_PARAMETER => $tempModel],
+				UrlGeneratorInterface::ABSOLUTE_URL
+			);
 		}
 
 		return str_replace($placeholder, '%s', $url);
