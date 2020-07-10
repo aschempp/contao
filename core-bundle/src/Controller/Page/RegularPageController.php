@@ -14,7 +14,7 @@ namespace Contao\CoreBundle\Controller\Page;
 
 use Contao\PageModel;
 
-class RegularController extends AbstractCompositeController
+class RegularPageController extends AbstractCompositeController
 {
     public function __invoke(PageModel $pageModel)
     {

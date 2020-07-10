@@ -17,7 +17,7 @@ use Contao\CoreBundle\Routing\Page\CompositionAwareInterface;
 use Contao\InsertTags;
 use Contao\PageModel;
 
-class RedirectController extends AbstractController implements CompositionAwareInterface
+class RedirectPageController extends AbstractController implements CompositionAwareInterface
 {
     public function __invoke(PageModel $pageModel)
     {

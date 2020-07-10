@@ -21,7 +21,7 @@ use League\Uri\Http;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Logout\LogoutUrlGenerator;
 
-class LogoutController extends AbstractController implements CompositionAwareInterface
+class LogoutPageController extends AbstractController implements CompositionAwareInterface
 {
     /**
      * @var LogoutUrlGenerator

@@ -19,7 +19,7 @@ use Contao\CoreBundle\Routing\Page\CompositionAwareInterface;
 use Contao\PageModel;
 use Symfony\Component\HttpFoundation\Request;
 
-class ForwardController extends AbstractController implements CompositionAwareInterface
+class ForwardPageController extends AbstractController implements CompositionAwareInterface
 {
     public function __invoke(Request $request, PageModel $pageModel)
     {

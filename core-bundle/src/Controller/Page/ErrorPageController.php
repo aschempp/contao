@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\UriSigner;
 
-class ErrorController extends AbstractCompositeController implements CompositionAwareInterface
+class ErrorPageController extends AbstractCompositeController implements CompositionAwareInterface
 {
     public function __invoke(Request $request, PageModel $pageModel): Response
     {

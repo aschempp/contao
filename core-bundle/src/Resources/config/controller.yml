@@ -3,29 +3,29 @@ services:
         autoconfigure: true
         public: true
 
-    Contao\CoreBundle\Controller\Page\ErrorController:
+    Contao\CoreBundle\Controller\Page\ErrorPageController:
         tags:
             - { name: contao.page, type: error_401 }
             - { name: contao.page, type: error_403 }
             - { name: contao.page, type: error_404 }
             - { name: monolog.logger, channel: contao }
 
-    Contao\CoreBundle\Controller\Page\ForwardController:
+    Contao\CoreBundle\Controller\Page\ForwardPageController:
         tags:
             - { name: contao.page }
             - { name: monolog.logger, channel: contao }
 
-    Contao\CoreBundle\Controller\Page\LogoutController:
+    Contao\CoreBundle\Controller\Page\LogoutPageController:
         arguments:
             - '@security.logout_url_generator'
         tags:
             - { name: contao.page }
 
-    Contao\CoreBundle\Controller\Page\RedirectController:
+    Contao\CoreBundle\Controller\Page\RedirectPageController:
         tags:
             - { name: contao.page }
 
-    Contao\CoreBundle\Controller\Page\RegularController:
+    Contao\CoreBundle\Controller\Page\RegularPageController:
         tags:
             - { name: contao.page }
 
