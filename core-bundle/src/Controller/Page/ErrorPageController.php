@@ -4,13 +4,13 @@ namespace Contao\CoreBundle\Controller\Page;
 
 use Contao\CoreBundle\Exception\ForwardPageNotFoundException;
 use Contao\CoreBundle\Monolog\ContaoContext;
-use Contao\CoreBundle\Routing\Page\CompositionAwareInterface;
+use Contao\CoreBundle\Routing\Page\ContentCompositionInterface;
 use Contao\PageModel;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\UriSigner;
 
-class ErrorPageController extends AbstractCompositeController implements CompositionAwareInterface
+class ErrorPageController extends AbstractCompositeController implements ContentCompositionInterface
 {
     public function __invoke(Request $request, PageModel $pageModel): Response
     {

@@ -15,11 +15,10 @@ namespace Contao\CoreBundle\Controller\Page;
 use Contao\CoreBundle\Controller\AbstractController;
 use Contao\CoreBundle\Exception\ForwardPageNotFoundException;
 use Contao\CoreBundle\Monolog\ContaoContext;
-use Contao\CoreBundle\Routing\Page\CompositionAwareInterface;
 use Contao\PageModel;
 use Symfony\Component\HttpFoundation\Request;
 
-class ForwardPageController extends AbstractController implements CompositionAwareInterface
+class ForwardPageController extends AbstractController
 {
     public function __invoke(Request $request, PageModel $pageModel)
     {
@@ -51,10 +50,5 @@ class ForwardPageController extends AbstractController implements CompositionAwa
         $params['parameters'] = $request->attributes->get('parameters');
 
         $this->redirectToContent($forwardPage, $params, 303);
-    }
-
-    public function supportsContentComposition(PageModel $pageModel): bool
-    {
-        return false;
     }
 }

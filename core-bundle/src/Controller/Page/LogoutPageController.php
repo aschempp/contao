@@ -13,7 +13,6 @@ declare(strict_types=1);
 namespace Contao\CoreBundle\Controller\Page;
 
 use Contao\CoreBundle\Controller\AbstractController;
-use Contao\CoreBundle\Routing\Page\CompositionAwareInterface;
 use Contao\PageModel;
 use Contao\System;
 use League\Uri\Components\Query;
@@ -21,7 +20,7 @@ use League\Uri\Http;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Logout\LogoutUrlGenerator;
 
-class LogoutPageController extends AbstractController implements CompositionAwareInterface
+class LogoutPageController extends AbstractController
 {
     /**
      * @var LogoutUrlGenerator
@@ -48,11 +47,6 @@ class LogoutPageController extends AbstractController implements CompositionAwar
         $query = $query->merge('redirect=' . $redirect);
 
         return $this->redirect((string) $uri->withQuery((string) $query), 307);
-    }
-
-    public function supportsContentComposition(PageModel $pageModel): bool
-    {
-        return false;
     }
 
     private function getRedirectUrl(Request $request, PageModel $pageModel): string

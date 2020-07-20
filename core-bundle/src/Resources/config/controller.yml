@@ -12,18 +12,18 @@ services:
 
     Contao\CoreBundle\Controller\Page\ForwardPageController:
         tags:
-            - { name: contao.page }
+            - { name: contao.page, contentComposition: false }
             - { name: monolog.logger, channel: contao }
 
     Contao\CoreBundle\Controller\Page\LogoutPageController:
         arguments:
             - '@security.logout_url_generator'
         tags:
-            - { name: contao.page }
+            - { name: contao.page, contentComposition: false }
 
     Contao\CoreBundle\Controller\Page\RedirectPageController:
         tags:
-            - { name: contao.page }
+            - { name: contao.page, contentComposition: false }
 
     Contao\CoreBundle\Controller\Page\RegularPageController:
         tags:

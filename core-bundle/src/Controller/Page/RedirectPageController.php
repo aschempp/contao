@@ -13,11 +13,10 @@ declare(strict_types=1);
 namespace Contao\CoreBundle\Controller\Page;
 
 use Contao\CoreBundle\Controller\AbstractController;
-use Contao\CoreBundle\Routing\Page\CompositionAwareInterface;
 use Contao\InsertTags;
 use Contao\PageModel;
 
-class RedirectPageController extends AbstractController implements CompositionAwareInterface
+class RedirectPageController extends AbstractController
 {
     public function __invoke(PageModel $pageModel)
     {
@@ -31,10 +30,5 @@ class RedirectPageController extends AbstractController implements CompositionAw
             $insertTags->replace($pageModel->url, false),
             'temporary' === $pageModel->redirect ? 302 : 301
         );
-    }
-
-    public function supportsContentComposition(PageModel $pageModel): bool
-    {
-        return false;
     }
 }
