@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Contao\CoreBundle\Routing\Matcher;
 
+use Contao\CoreBundle\Util\LocaleUtil;
 use Contao\PageModel;
 use Symfony\Cmf\Component\Routing\NestedMatcher\RouteFilterInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -45,10 +46,12 @@ class LanguageFilter implements RouteFilterInterface
                 continue;
             }
 
+            $rootLanguage = LocaleUtil::formatAsLocale($pageModel->rootLanguage);
+
             if (
                 $pageModel->rootIsFallback
-                || \in_array(str_replace('-', '_', $pageModel->rootLanguage), $languages, true)
-                || preg_grep('/'.preg_quote($pageModel->rootLanguage, '/').'_[A-Z]{2}/', $languages)
+                || \in_array($rootLanguage, $languages, true)
+                || preg_grep('/^'.preg_quote($rootLanguage, '/').'_/', $languages)
             ) {
                 continue;
             }

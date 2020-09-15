@@ -14,6 +14,7 @@ use Contao\CoreBundle\Exception\LegacyRoutingException;
 use Contao\CoreBundle\Exception\NoRootPageFoundException;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\CoreBundle\Search\Document;
+use Contao\CoreBundle\Util\LocaleUtil;
 use Psr\Log\LogLevel;
 use Symfony\Cmf\Component\Routing\RouteObjectInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -377,7 +378,7 @@ abstract class Frontend extends Controller
 		{
 			if (Config::get('addLanguageToUrl'))
 			{
-				$arrParams = array('_locale' => $objRootPage->language);
+				$arrParams = array('_locale' => LocaleUtil::formatAsLocale($objRootPage->language));
 
 				$strUrl = System::getContainer()->get('router')->generate('contao_index', $arrParams);
 				$strUrl = substr($strUrl, \strlen(Environment::get('path')) + 1);
@@ -555,7 +556,7 @@ abstract class Frontend extends Controller
 		$arrData = StringUtil::deserialize($strData);
 
 		// Convert the language to a locale (see #5678)
-		$strLanguage = str_replace('-', '_', $strLanguage);
+		$strLanguage = LocaleUtil::formatAsLocale($strLanguage);
 
 		if (!\is_array($arrData) || !isset($arrData[$strLanguage]))
 		{

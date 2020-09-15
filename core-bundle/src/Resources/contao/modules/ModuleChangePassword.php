@@ -10,6 +10,7 @@
 
 namespace Contao;
 
+use Contao\CoreBundle\Util\LocaleUtil;
 use Patchwork\Utf8;
 
 /**
@@ -65,7 +66,7 @@ class ModuleChangePassword extends Module
 
 		$this->import(FrontendUser::class, 'User');
 
-		$GLOBALS['TL_LANGUAGE'] = $objPage->language;
+		$GLOBALS['TL_LANGUAGE'] = LocaleUtil::formatAsLanguageTag($objPage->language);
 
 		System::loadLanguageFile('tl_member');
 		$this->loadDataContainer('tl_member');
