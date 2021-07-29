@@ -21,6 +21,8 @@ use Contao\Model\Collection;
 use League\Uri\Components\Query;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\Glob;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\HttpCache\ResponseCacheStrategyInterface;
 
 /**
  * Abstract parent class for Controllers
@@ -530,6 +532,7 @@ abstract class Controller extends System
 
 		$objArticle = new ModuleArticle($objRow, $strColumn);
 		$strBuffer = $objArticle->generate($blnIsInsertTag);
+		static::addSharedMaxAgeToResponse($objRow);
 
 		// Disable indexing if protected
 		if ($objArticle->protected && !preg_match('/^\s*<!-- indexer::stop/', $strBuffer))
@@ -620,6 +623,11 @@ abstract class Controller extends System
 		if (isset($objStopwatch))
 		{
 			$objStopwatch->stop('contao.content_element.' . $objRow->type . ' (ID ' . $objRow->id . ')');
+		}
+
+		if (!$objElement instanceof ContentProxy)
+		{
+			static::addSharedMaxAgeToResponse($objRow);
 		}
 
 		return $strBuffer;
@@ -2569,6 +2577,32 @@ abstract class Controller extends System
 		$files = iterator_to_array($filesIterator);
 
 		return array_keys($files);
+	}
+
+	private static function addSharedMaxAgeToResponse($objRow): void
+	{
+		$time = time();
+		$min = [];
+
+		if ('' !== $objRow->start && $objRow->start > $time)
+		{
+			$min[] = (int) $objRow->start - $time;
+		}
+
+		if ('' !== $objRow->stop && $objRow->stop > $time)
+		{
+			$min[] = (int) $objRow->stop - $time;
+		}
+
+		if (empty($min))
+		{
+			return;
+		}
+
+		$response = new Response();
+		$response->setSharedMaxAge(min($min));
+
+		static::getContainer()->get(ResponseCacheStrategyInterface::class)->add($response);
 	}
 }
 
