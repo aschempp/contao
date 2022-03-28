@@ -15,7 +15,6 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Provide methods to handle back end templates.
  *
- * @property string $ua
  * @property array  $javascripts
  * @property array  $stylesheets
  * @property string $mootools
@@ -68,12 +67,19 @@ class BackendTemplate extends Template
 	 */
 	protected function compile()
 	{
-		$this->ua = '';
+		$classes = array();
 
 		if (Config::get('fullscreen'))
 		{
-			$this->ua .= ' fullscreen';
+			$classes[] = 'fullscreen';
 		}
+
+		if (Input::get('popup'))
+		{
+			$classes[] = 'popup';
+		}
+
+		$this->class = implode(' ', $classes);
 
 		$this->addBackendConfig();
 

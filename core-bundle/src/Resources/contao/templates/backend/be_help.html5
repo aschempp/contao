@@ -30,7 +30,7 @@
   <?= $this->javascripts ?>
 
 </head>
-<body class="<?= $this->ua ?> popup">
+<body class="<?php if ($this->class): ?><?= $this->class ?> <?php endif; ?>popup">
 
   <div id="container">
     <main id="main">
