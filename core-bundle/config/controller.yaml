@@ -150,6 +150,8 @@ services:
         arguments:
             - '@contao.framework'
 
+    Contao\CoreBundle\Controller\Page\GonePageController: ~
+
     Contao\CoreBundle\Controller\Page\RootPageController:
         arguments:
             - '@?logger'
