@@ -1,0 +1,5 @@
+tl_news:
+    alias: 'The news alias (or ID if empty).'
+    year: 'Year of date of the news.'
+    month: 'Month of date of the news.'
+    day: 'Day of date of the news.'

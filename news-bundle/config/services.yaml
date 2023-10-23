@@ -14,6 +14,14 @@ services:
             - '@contao_news.feed_specification'
             - '%kernel.charset%'
 
+    contao_news.controller.page.news_reader:
+        class: Contao\NewsBundle\Controller\Page\NewsReaderController
+        arguments:
+            - '@contao.framework'
+            - '@contao.routing.response_context_factory'
+            - '@contao.string.html_decoder'
+            - '@contao.routing.content_url_generator'
+
     contao_news.feed_specification:
         class: FeedIo\Specification
         arguments:
@@ -83,6 +91,7 @@ services:
         arguments:
             - '@contao.framework'
             - '@security.helper'
+            - '@contao.routing.content_url_generator'
         tags:
             - kernel.event_listener
 
@@ -103,6 +112,12 @@ services:
             - '@security.helper'
         tags:
             - { name: contao.picker_provider, priority: 128 }
+
+    contao_news.routing.news_url_resolver:
+        class: Contao\NewsBundle\Routing\NewsUrlResolver
+        arguments:
+            - '@contao.insert_tag.parser'
+            - '@translator'
 
     contao_news.security.news_archive_access_voter:
         class: Contao\NewsBundle\Security\Voter\NewsArchiveAccessVoter

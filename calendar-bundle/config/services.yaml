@@ -53,6 +53,7 @@ services:
         arguments:
             - '@contao.framework'
             - '@security.helper'
+            - '@contao.routing.content_url_generator'
         tags:
             - kernel.event_listener
 
@@ -65,3 +66,9 @@ services:
             - '@security.helper'
         tags:
             - { name: contao.picker_provider, priority: 96 }
+
+    contao_calendar.routing.calendar_events_url_resolver:
+        class: Contao\CalendarBundle\Routing\CalendarEventsUrlResolver
+        arguments:
+            - '@contao.insert_tag.parser'
+            - '@translator'

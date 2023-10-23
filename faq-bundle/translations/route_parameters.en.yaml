@@ -1,0 +1,4 @@
+tl_faq:
+    alias: 'The FAQ alias (or ID if empty).'
+    id: 'The FAQ database ID.'
+    question: 'Question of the FAQ item.'

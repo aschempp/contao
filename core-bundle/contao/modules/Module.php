@@ -294,6 +294,7 @@ abstract class Module extends Frontend
 		$objTemplate->module = $this; // see #155
 
 		$db = Database::getInstance();
+		$urlGenerator = System::getContainer()->get('contao.routing.content_url_generator');
 
 		/** @var PageModel $objPage */
 		global $objPage;
@@ -326,54 +327,22 @@ abstract class Module extends Frontend
 					$subitems = $this->renderNavigation($objSubpage->id, $level, $host, $language);
 				}
 
-				// Get href
-				switch ($objSubpage->type)
+				try
 				{
-					case 'redirect':
-						$href = $objSubpage->url;
+					$href = $urlGenerator->generate($objSubpage);
+				}
+				catch (ExceptionInterface)
+				{
+					continue;
+				}
 
-						if (strncasecmp($href, 'mailto:', 7) === 0)
-						{
-							$href = StringUtil::encodeEmail($href);
-						}
-						break;
-
-					case 'forward':
-						if ($objSubpage->jumpTo)
-						{
-							$objNext = PageModel::findPublishedById($objSubpage->jumpTo);
-						}
-						else
-						{
-							$objNext = PageModel::findFirstPublishedRegularByPid($objSubpage->id);
-						}
-
-						// Hide the link if the target page is invisible
-						if (!$objNext instanceof PageModel || (!$objNext->loadDetails()->isPublic && !$blnShowUnpublished))
-						{
-							continue 2;
-						}
-
-						try
-						{
-							$href = $objNext->getFrontendUrl();
-						}
-						catch (ExceptionInterface $exception)
-						{
-							continue 2;
-						}
-						break;
-
-					default:
-						try
-						{
-							$href = $objSubpage->getFrontendUrl();
-						}
-						catch (ExceptionInterface $exception)
-						{
-							continue 2;
-						}
-						break;
+				if (str_starts_with($href, 'mailto:'))
+				{
+					$href = StringUtil::encodeEmail($href);
+				}
+				else
+				{
+					$href = StringUtil::ampersand($href);
 				}
 
 				$items[] = $this->compileNavigationRow($objPage, $objSubpage, $subitems, $href);

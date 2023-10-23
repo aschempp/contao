@@ -55,17 +55,23 @@ abstract class AbstractPageRouteProvider implements RouteProviderInterface
         }
 
         $conditions = [];
+        $values = [];
 
         if ($ids) {
             $conditions[] = 'tl_page.id IN ('.implode(',', $ids).')';
         }
 
         if ($aliases) {
-            $conditions[] = 'tl_page.alias IN ('.implode(',', array_fill(0, \count($aliases), '?')).')';
+            foreach ($aliases as $alias) {
+                $conditions[] = 'tl_page.alias=?';
+                $conditions[] = 'tl_page.alias LIKE ?';
+                $values[] = $alias;
+                $values[] = $alias.'/%';
+            }
         }
 
         $pageModel = $this->framework->getAdapter(PageModel::class);
-        $pages = $pageModel->findBy([implode(' OR ', $conditions)], $aliases);
+        $pages = $pageModel->findBy([implode(' OR ', $conditions)], $values);
 
         if (!$pages instanceof Collection) {
             return [];

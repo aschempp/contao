@@ -59,7 +59,7 @@ class ModuleNewsArchive extends ModuleNews
 		}
 
 		// Show the newsreader if an item has been selected
-		if ($this->news_readerModule > 0 && Input::get('auto_item') !== null)
+		if ($this->news_readerModule > 0 && ($request->attributes->get('_content') instanceof NewsModel || Input::get('auto_item') !== null))
 		{
 			return $this->getFrontendModule($this->news_readerModule, $this->strColumn);
 		}

@@ -26,6 +26,12 @@
       <trans-unit id="tl_page.requireItem.1">
         <source>Trigger a 404 error if the page URL does not contain an item alias.</source>
       </trans-unit>
+      <trans-unit id="tl_page.redirectParameters.0">
+        <source>Redirect incorrect parameters</source>
+      </trans-unit>
+      <trans-unit id="tl_page.redirectParameters.1">
+        <source>Redirect to the correct content page if any of the non-identifying parameters is incorrect.</source>
+      </trans-unit>
       <trans-unit id="tl_page.routePath.0">
         <source>Route path</source>
       </trans-unit>
@@ -484,6 +490,27 @@
       </trans-unit>
       <trans-unit id="tl_page.routeConflicts.1">
         <source>The following pages have a similar alias that may conflict with this page. If the URL is not resolved correctly, try changing the priority of the routes.</source>
+      </trans-unit>
+      <trans-unit id="tl_page.routeParameters.0">
+        <source>Route parameters</source>
+      </trans-unit>
+      <trans-unit id="tl_page.routeParameters.1">
+        <source>Use route parameters to manually generate the content alias of this page. Make sure to use exactly one identifier parameter.</source>
+      </trans-unit>
+      <trans-unit id="tl_page.routeParameters.name">
+        <source>Name</source>
+      </trans-unit>
+      <trans-unit id="tl_page.routeParameters.description">
+        <source>Description</source>
+      </trans-unit>
+      <trans-unit id="tl_page.routeParameters.requirement">
+        <source>Requirement</source>
+      </trans-unit>
+      <trans-unit id="tl_page.routeParameters.default">
+        <source>Default</source>
+      </trans-unit>
+      <trans-unit id="tl_page.routeParameters.identifier">
+        <source>Identifier</source>
       </trans-unit>
       <trans-unit id="tl_page.relCanonical">
         <source>Enable canonical URLs in the website root page to enable this configuration.</source>

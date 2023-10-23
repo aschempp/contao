@@ -12,31 +12,47 @@ declare(strict_types=1);
 
 namespace Contao\CoreBundle\Routing\Page;
 
+use Contao\CoreBundle\Routing\Content\ContentUrlResolverInterface;
+use Contao\CoreBundle\Routing\Content\UrlParameter;
+use Contao\NewsModel;
 use Contao\PageModel;
 use Doctrine\DBAL\Connection;
+use Symfony\Contracts\Service\ResetInterface;
 
-class PageRegistry
+class PageRegistry implements ResetInterface
 {
-    private const DISABLE_CONTENT_COMPOSITION = ['redirect', 'forward', 'logout'];
+    private const DISABLE_CONTENT_COMPOSITION = ['redirect', 'forward'];
 
     private array|null $urlPrefixes = null;
 
     private array|null $urlSuffixes = null;
 
     /**
-     * @var array<RouteConfig>
+     * @var array<string,RouteConfig>
      */
     private array $routeConfigs = [];
 
     /**
-     * @var array<DynamicRouteInterface>
+     * @var array<string,DynamicRouteInterface|UrlResolverInterface>
      */
     private array $routeEnhancers = [];
 
     /**
-     * @var array<ContentCompositionInterface|bool>
+     * @var array<string,ContentCompositionInterface|bool>
      */
     private array $contentComposition = [];
+
+    /**
+     * @var array<string,ContentTypesInterface|array>
+     */
+    private array $contentTypes = [];
+
+    private array $contentResolvers = [];
+
+    /**
+     * @var array<string,array<ContentUrlResolverInterface>>
+     */
+    private array $resolverMap = [];
 
     public function __construct(private readonly Connection $connection)
     {
@@ -63,9 +79,17 @@ class PageRegistry
             $path = '';
             $options['compiler_class'] = UnroutablePageRouteCompiler::class;
         } elseif (null === $path) {
-            if ($this->isParameterless($pageModel)) {
-                $path = '/'.($pageModel->alias ?: $pageModel->id);
-            } else {
+            $path = '/'.($pageModel->alias ?: $pageModel->id);
+
+            if ($typedParameters = $this->getUrlParameters($pageModel)) {
+                foreach ($typedParameters as $parameters) {
+                    foreach ($parameters as $parameter) {
+                        if ($parameter->getRequirement()) {
+                            $requirements[$parameter->getName()] = $parameter->getRequirement();
+                        }
+                    }
+                }
+            } elseif (!$this->isParameterless($pageModel)) {
                 $path = '/'.($pageModel->alias ?: $pageModel->id).'{!parameters}';
                 $defaults['parameters'] = '';
                 $requirements['parameters'] = $pageModel->requireItem ? '/.+?' : '(/.+?)?';
@@ -78,7 +102,7 @@ class PageRegistry
             $route->setUrlSuffix($config->getUrlSuffix());
         }
 
-        if (!isset($this->routeEnhancers[$type])) {
+        if (!isset($this->routeEnhancers[$type]) || !$this->routeEnhancers[$type] instanceof DynamicRouteInterface) {
             return $route;
         }
 
@@ -119,6 +143,65 @@ class PageRegistry
     }
 
     /**
+     * @return array<string,array<string,UrlParameter>>
+     */
+    public function getUrlParameters(PageModel $pageModel): array
+    {
+        if (!isset($this->contentTypes[$pageModel->type])) {
+            return [];
+        }
+
+        $contentTypes = $this->contentTypes[$pageModel->type];
+
+        if ($contentTypes instanceof ContentTypesInterface) {
+            $contentTypes = $contentTypes->getSupportedContentTypes($pageModel);
+        }
+
+        $parameters = [];
+
+        foreach ($contentTypes as $type) {
+            foreach ($this->getResolvers($type) as $resolver) {
+                foreach ($resolver->getAvailableParameters($type) as $parameter) {
+                    // Resolvers are sorted by priority, so make sure the first parameter wins
+                    if (isset($parameters[$type][$parameter->getName()])) {
+                        continue;
+                    }
+
+                    $parameters[$type][$parameter->getName()] = $parameter;
+                }
+            }
+        }
+
+        return $parameters;
+    }
+
+    public function getPageUrlResolver(PageModel $pageModel): UrlResolverInterface|null
+    {
+        if (($this->routeEnhancers[$pageModel->type] ?? null) instanceof UrlResolverInterface) {
+            return $this->routeEnhancers[$pageModel->type];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<ContentUrlResolverInterface> $contentResolvers
+     */
+    public function setContentUrlResolvers(array $contentResolvers): void
+    {
+        $this->contentResolvers = $contentResolvers;
+    }
+
+    /**
+     * @param object $content
+     * @return array<ContentUrlResolverInterface>
+     */
+    public function getUrlResolversForContent(object $content): array
+    {
+        return $this->getResolvers(get_class($content));
+    }
+
+    /**
      * @return array<string>
      */
     public function getUrlPrefixes(): array
@@ -138,7 +221,7 @@ class PageRegistry
         return $this->urlSuffixes;
     }
 
-    public function add(string $type, RouteConfig $config, DynamicRouteInterface|null $routeEnhancer = null, ContentCompositionInterface|bool $contentComposition = true): self
+    public function add(string $type, RouteConfig $config, DynamicRouteInterface|UrlResolverInterface|null $routeEnhancer = null, ContentCompositionInterface|bool $contentComposition = true, ContentTypesInterface|array $contentTypes = []): self
     {
         // Override existing pages with the same identifier
         $this->routeConfigs[$type] = $config;
@@ -148,7 +231,9 @@ class PageRegistry
         }
 
         $this->contentComposition[$type] = $contentComposition;
+        $this->contentTypes[$type] = $contentTypes;
 
+        // Make sure to reset caches when a page type is added
         $this->urlPrefixes = null;
         $this->urlSuffixes = null;
 
@@ -205,6 +290,13 @@ class PageRegistry
         return $types;
     }
 
+    public function reset()
+    {
+        $this->urlPrefixes = null;
+        $this->urlSuffixes = null;
+        $this->resolverMap = [];
+    }
+
     private function initializePrefixAndSuffix(): void
     {
         if (null !== $this->urlPrefixes || null !== $this->urlSuffixes) {
@@ -228,7 +320,9 @@ class PageRegistry
         }
 
         foreach ($this->routeEnhancers as $enhancer) {
-            $urlSuffixes[] = $enhancer->getUrlSuffixes();
+            if ($enhancer instanceof DynamicRouteInterface) {
+                $urlSuffixes[] = $enhancer->getUrlSuffixes();
+            }
         }
 
         $this->urlSuffixes = array_values(array_unique(array_merge(...$urlSuffixes)));
@@ -242,5 +336,17 @@ class PageRegistry
         }
 
         return 'forward' === $pageModel->type && !$pageModel->alwaysForward;
+    }
+
+    private function getResolvers(string $type): array
+    {
+        if (isset($this->resolverMap[$type])) {
+            return $this->resolverMap[$type];
+        }
+
+        return $this->resolverMap[$type] = array_filter(
+            $this->contentResolvers,
+            fn (ContentUrlResolverInterface $resolver) => $resolver->supportsType($type)
+        );
     }
 }

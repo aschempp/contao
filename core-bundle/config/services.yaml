@@ -458,6 +458,7 @@ services:
         arguments:
             - '@contao.framework'
             - '@contao.security.token_checker'
+            - '@contao.routing.content_url_generator'
 
     contao.insert_tag.string_util_flag:
         class: Contao\CoreBundle\InsertTag\Flag\StringUtilFlag
@@ -641,6 +642,23 @@ services:
     contao.routing.backend_matcher:
         class: Contao\CoreBundle\Routing\Matcher\BackendMatcher
 
+    contao.routing.content_url_generator:
+        class: Contao\CoreBundle\Routing\ContentUrlGenerator
+        arguments:
+            - '@router'
+            - '@contao.routing.page_registry'
+            - '@doctrine.orm.entity_manager'
+        public: true
+
+    contao.routing.content.page_resolver:
+        class: Contao\CoreBundle\Routing\Content\PageUrlResolver
+        arguments:
+            - '@contao.routing.page_registry'
+            - '@contao.insert_tag.parser'
+
+    contao.routing.content.article_resolver:
+        class: Contao\CoreBundle\Routing\Content\ArticleUrlResolver
+
     contao.routing.frontend_matcher:
         class: Contao\CoreBundle\Routing\Matcher\FrontendMatcher
 
@@ -727,6 +745,7 @@ services:
         public: true
         arguments:
             - '@database_connection'
+            - [] # set by ContentUrlResolverPass
 
     contao.routing.page_router:
         class: Symfony\Cmf\Component\Routing\DynamicRouter
@@ -1166,6 +1185,7 @@ services:
     Contao\CoreBundle\Mailer\AvailableTransports: '@contao.mailer.available_transports'
     Contao\CoreBundle\OptIn\OptIn: '@contao.opt_in'
     Contao\CoreBundle\Picker\PickerBuilderInterface: '@contao.picker.builder'
+    Contao\CoreBundle\Routing\ContentUrlGenerator: '@contao.routing.content_url_generator'
     Contao\CoreBundle\Routing\PageFinder: '@contao.routing.page_finder'
     Contao\CoreBundle\Routing\Page\PageRegistry: '@contao.routing.page_registry'
     Contao\CoreBundle\Routing\ResponseContext\ResponseContextAccessor: '@contao.routing.response_context_accessor'

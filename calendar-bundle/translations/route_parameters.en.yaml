@@ -1,0 +1,7 @@
+tl_calendar_events:
+    alias: 'The event alias (or ID if empty).'
+    id: 'The event database ID.'
+    title: 'The event title.'
+    year: 'Year of start date of the event.'
+    month: 'Month of start date of the event.'
+    day: 'Day of start date of the event.'

@@ -18,6 +18,7 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\Page\PageRegistry;
 use Contao\CoreBundle\Routing\Page\PageRoute;
 use Contao\DataContainer;
+use Contao\NewsModel;
 use Contao\PageModel;
 use Contao\StringUtil;
 use Twig\Environment;
@@ -42,6 +43,26 @@ class PageRoutingListener
 
         return $this->twig->render('@ContaoCore/Backend/be_route_path.html.twig', [
             'path' => $this->getPathWithParameters($this->pageRegistry->getRoute($pageModel)),
+        ]);
+    }
+
+    #[AsCallback(table: 'tl_page', target: 'fields.routeParameters.input_field')]
+    public function generateRouteParameters(DataContainer $dc): string
+    {
+        $pageModel = $this->framework->getAdapter(PageModel::class)->findByPk($dc->id);
+
+        if (!$pageModel) {
+            return '';
+        }
+
+        $parameters = $this->pageRegistry->getUrlParameters($pageModel);
+
+        if (empty($parameters)) {
+            return '';
+        }
+
+        return $this->twig->render('@ContaoCore/Backend/be_route_parameters.html.twig', [
+            'parameters' => $parameters,
         ]);
     }
 

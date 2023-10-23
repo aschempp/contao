@@ -28,10 +28,9 @@ class RouteParametersException extends InvalidParameterException
         $message = $previous->getMessage();
 
         if ($route instanceof PageRoute) {
-            $pageModel = $route->getPageModel();
-            $message = 'Unable to generate route for page ID '.$pageModel->id.'.';
+            $message = 'Unable to generate route for '.$route->getRouteKey().'.';
 
-            if ($pageModel->requireItem && empty($parameters['parameters'])) {
+            if (empty($parameters['parameters']) && $route->getPageModel()->requireItem) {
                 $message .= ' The page requires an item but none was given.';
             }
         }

@@ -14,6 +14,7 @@ namespace Contao\CoreBundle\Command;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\Page\ContentCompositionInterface;
+use Contao\CoreBundle\Routing\Page\ContentTypesInterface;
 use Contao\CoreBundle\Routing\Page\DynamicRouteInterface;
 use Contao\CoreBundle\Routing\Page\PageRegistry;
 use Contao\CoreBundle\Routing\Page\RouteConfig;
@@ -31,19 +32,24 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class DebugPagesCommand extends Command
 {
     /**
-     * @var array<RouteConfig>
+     * @var array<string,RouteConfig>
      */
     private array $routeConfigs = [];
 
     /**
-     * @var array<DynamicRouteInterface>
+     * @var array<string,DynamicRouteInterface>
      */
     private array $routeEnhancers = [];
 
     /**
-     * @var array<ContentCompositionInterface|bool>
+     * @var array<string,ContentCompositionInterface|bool>
      */
     private array $contentComposition = [];
+
+    /**
+     * @var array<string,ContentTypesInterface|array>
+     */
+    private array $contentTypes = [];
 
     public function __construct(
         private readonly ContaoFramework $framework,
@@ -52,7 +58,7 @@ class DebugPagesCommand extends Command
         parent::__construct();
     }
 
-    public function add(string $type, RouteConfig $config, DynamicRouteInterface|null $routeEnhancer = null, ContentCompositionInterface|bool $contentComposition = true): void
+    public function add(string $type, RouteConfig $config, DynamicRouteInterface|null $routeEnhancer = null, ContentCompositionInterface|bool $contentComposition = true, ContentTypesInterface|array $contentTypes = []): void
     {
         $this->routeConfigs[$type] = $config;
 
@@ -60,9 +66,8 @@ class DebugPagesCommand extends Command
             $this->routeEnhancers[$type] = $routeEnhancer;
         }
 
-        if (null !== $contentComposition) {
-            $this->contentComposition[$type] = $contentComposition;
-        }
+        $this->contentComposition[$type] = $contentComposition;
+        $this->contentTypes[$type] = $contentTypes;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -87,6 +92,12 @@ class DebugPagesCommand extends Command
                 $contentComposition = 'dynamic';
             }
 
+            if (($this->contentTypes[$type] ?? null) instanceof ContentTypesInterface) {
+                $contentTypes = 'dynamic';
+            } else {
+                $contentTypes = $this->generateArray($this->contentTypes[$type] ?? []);
+            }
+
             $rows[] = [
                 $type,
                 $config?->getPath() ? $config->getPath() : '*',
@@ -96,26 +107,31 @@ class DebugPagesCommand extends Command
                 $config ? $this->generateArray($config->getRequirements()) : '-',
                 $config ? $this->generateArray($config->getDefaults()) : '-',
                 $config ? $this->generateArray($config->getOptions()) : '-',
+                $contentTypes,
             ];
         }
 
         $io->title('Contao Pages');
-        $io->table(['Type', 'Path', 'URL Suffix', 'Content Composition', 'Route Enhancer', 'Requirements', 'Defaults', 'Options'], $rows);
+        $io->table(['Type', 'Path', 'URL Suffix', 'Content Composition', 'Route Enhancer', 'Requirements', 'Defaults', 'Options', 'Content Types'], $rows);
 
         return Command::SUCCESS;
     }
 
     private function generateArray(array $values): string
     {
-        $length = array_reduce(
-            array_keys($values),
-            static function ($carry, $item): int {
-                $length = \strlen((string) $item);
+        $isList = array_is_list($values);
 
-                return max($carry, $length);
-            },
-            0,
-        );
+        if (!$isList) {
+            $length = array_reduce(
+                array_keys($values),
+                static function ($carry, $item): int {
+                    $length = \strlen((string) $item);
+
+                    return max($carry, $length);
+                },
+                0,
+            );
+        }
 
         $return = [];
 
@@ -124,7 +140,11 @@ class DebugPagesCommand extends Command
                 $v = $v ? 'true' : 'false';
             }
 
-            $return[] = sprintf('%s : %s', str_pad($k, $length, ' ', STR_PAD_RIGHT), $v);
+            if ($isList) {
+                $return[] = ' - '.$v;
+            } else {
+                $return[] = sprintf('%s : %s', str_pad($k, $length, ' ', STR_PAD_RIGHT), $v);
+            }
         }
 
         return $return ? implode("\n", $return) : '-';

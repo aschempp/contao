@@ -1,4 +1,7 @@
 services:
+    _defaults:
+        autoconfigure: true
+
     contao_newsletter.cron.purge_subscriptions:
         class: Contao\NewsletterBundle\Cron\PurgeSubscriptionsCron
         arguments:
@@ -17,5 +20,11 @@ services:
         arguments:
             - '@contao.framework'
             - '@security.helper'
+            - '@contao.routing.content_url_generator'
         tags:
             - kernel.event_listener
+
+    contao_newsletter.routing.newsletter_url_resolver:
+        class: Contao\NewsletterBundle\Routing\NewsletterUrlResolver
+        arguments:
+            - '@translator'

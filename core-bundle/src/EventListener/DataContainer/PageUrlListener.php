@@ -16,12 +16,15 @@ use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\CoreBundle\Exception\DuplicateAliasException;
 use Contao\CoreBundle\Exception\RouteParametersException;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\CoreBundle\Routing\Content\UrlParameter;
 use Contao\CoreBundle\Routing\Page\PageRegistry;
 use Contao\CoreBundle\Routing\Page\PageRoute;
 use Contao\CoreBundle\Slug\Slug;
 use Contao\DataContainer;
 use Contao\Input;
+use Contao\NewsModel;
 use Contao\PageModel;
+use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use Symfony\Cmf\Component\Routing\NestedMatcher\FinalMatcherInterface;
 use Symfony\Cmf\Component\Routing\RouteObjectInterface;
@@ -50,6 +53,11 @@ class PageUrlListener
     #[AsCallback(table: 'tl_page', target: 'fields.alias.save')]
     public function generateAlias(string $value, DataContainer $dc): string
     {
+        // TODO: improve validation of parameters in alias
+        if (!preg_match('(^(?!/)[\w/.\-{}]+(?<!/)$)u', $value)) {
+            throw new \RuntimeException($GLOBALS['TL_LANG']['ERR']['folderalias']);
+        }
+
         $pageAdapter = $this->framework->getAdapter(PageModel::class);
 
         if (!$pageModel = $pageAdapter->findWithDetails($dc->id)) {
@@ -59,10 +67,14 @@ class PageUrlListener
         $this->addInputToPage($pageModel);
         $isRoutable = $this->pageRegistry->isRoutable($pageModel);
 
+        $typedParameters = $this->pageRegistry->getUrlParameters($pageModel);
+
         if ('' !== $value) {
             if (preg_match('/^[1-9]\d*$/', $value)) {
                 throw new \RuntimeException($this->translator->trans('ERR.aliasNumeric', [], 'contao_default'));
             }
+
+            $this->validateParameters($value, $typedParameters);
 
             if ($isRoutable) {
                 try {
@@ -89,6 +101,15 @@ class PageUrlListener
         // Generate folder URL aliases (see #4933)
         if ($pageModel->useFolderUrl) {
             $value = $pageModel->folderUrl.$value;
+        }
+
+        foreach ($typedParameters as $parameters) {
+            foreach ($parameters as $parameter) {
+                if ($parameter->isIdentifier()) {
+                    $value .= sprintf('/{%s}', $parameter->getName());
+                    break(2);
+                }
+            }
         }
 
         return $value;
@@ -306,6 +327,52 @@ class PageUrlListener
             if (null !== ($urlSuffix = $input->post('urlSuffix'))) {
                 $pageModel->urlSuffix = $urlSuffix;
             }
+        }
+    }
+
+    /**
+     * @param array<string,array<string,UrlParameter>> $typedParameters
+     */
+    private function validateParameters(string $value, array $typedParameters): void
+    {
+        if (!preg_match('(^[\w/.\-]+(/|$))u', $value)) {
+            throw new \RuntimeException('must start with a prefix');
+        }
+
+        // No need to validate, the alias does not start or end with slash, since
+        // that is already validated initially in generateAlias()
+        if (!preg_match_all('@/.*?{([^}]+)}@u', $value, $matches)) {
+            if ([] === $typedParameters) {
+                return;
+            }
+
+            throw new \RuntimeException('Invalid or missing parameters.');
+        }
+
+        $hasIdentifier = false;
+
+        foreach ($matches[1] as $match) {
+            foreach ($typedParameters as $parameters) {
+                if (!isset($parameters[$match])) {
+                    continue;
+                }
+
+                if ($parameters[$match]->isIdentifier()) {
+                    if ($hasIdentifier) {
+                        throw new \RuntimeException('Must not have more than one identifier parameter.');
+                    }
+
+                    $hasIdentifier = true;
+                }
+
+                continue(2);
+            }
+
+            throw new \RuntimeException('Invalid parameter: '.$match);
+        }
+
+        if (!$hasIdentifier) {
+            throw new \RuntimeException('Must add at least one identifier parameter.');
         }
     }
 }
