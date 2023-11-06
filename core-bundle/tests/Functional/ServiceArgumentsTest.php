@@ -34,6 +34,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
 
         if (!$container->has($serviceId)) {
             $this->addWarning('Service '.$serviceId.' was removed');
+
             return;
         }
 
@@ -41,6 +42,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
 
         if (null === ($constructor = $ref->getConstructor())) {
             $this->assertNull($constructor);
+
             return;
         }
 
@@ -53,7 +55,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
         );
 
         foreach ($constructor->getParameters() as $i => $parameter) {
-            if (!array_key_exists($i, $arguments)) {
+            if (!\array_key_exists($i, $arguments)) {
                 $this->assertTrue($parameter->isOptional(), sprintf('Missing argument %s on service ID "%s".', $i, $serviceId));
                 continue;
             }
@@ -74,7 +76,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
                 continue;
             }
 
-            if (!is_string($argument)) {
+            if (!\is_string($argument)) {
                 if (!$type) {
                     $this->addWarning(sprintf('Cannot validate argument %s of %s, it does not have a typehint.', $i, $serviceId));
                     continue;
@@ -112,7 +114,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
                     continue;
                 }
 
-                $this->assertInstanceOf($type?->getName(), $service, sprintf('Argument %s of %s should be %s but found %s.', $i, $serviceId, $type?->getName(), get_class($service)));
+                $this->assertInstanceOf($type?->getName(), $service, sprintf('Argument %s of %s should be %s but found %s.', $i, $serviceId, $type?->getName(), \get_class($service)));
             }
 
             // TODO: handle parameters
@@ -127,7 +129,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
             ->name('*.yaml')
             ->name('*.yml')
             ->path('src/Resources/config')
-            ->in(dirname(__DIR__, 3))
+            ->in(\dirname(__DIR__, 3))
         ;
 
         foreach ($files as $file) {
@@ -160,7 +162,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
                 continue;
             }
 
-            $count++;
+            ++$count;
         }
 
         return $count;
