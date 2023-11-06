@@ -77,8 +77,8 @@ class ServiceArgumentsTest extends FunctionalTestCase
             }
 
             if (!\is_string($argument)) {
-                if (!$type) {
-                    $this->addWarning(sprintf('Cannot validate argument %s of %s, it does not have a typehint.', $i, $serviceId));
+                if (!$type instanceof \ReflectionNamedType) {
+                    $this->addWarning(sprintf('Cannot validate argument %s of %s, it does not have a supported typehint.', $i, $serviceId));
                     continue;
                 }
 
@@ -119,7 +119,6 @@ class ServiceArgumentsTest extends FunctionalTestCase
 
             // TODO: handle parameters
         }
-
     }
 
     public function serviceProvider(): \Generator
