@@ -42,7 +42,7 @@ abstract class AbstractContentPageController extends AbstractController
             throw new PageNotFoundException('Page not found: '.$request->getRequestUri());
         }
 
-        if (!$this->validateContentParameters($request, $content)) {
+        if (!$this->validateContentParameters($request, $content, $pageModel)) {
             if ($pageModel->redirectParameters) {
                 return new RedirectResponse(
                     $this->generateContentUrl($content, [], UrlGeneratorInterface::ABSOLUTE_URL),
@@ -77,13 +77,13 @@ abstract class AbstractContentPageController extends AbstractController
         return null;
     }
 
-    protected function validateContentParameters(Request $request, object $content): bool
+    protected function validateContentParameters(Request $request, object $content, PageModel $pageModel): bool
     {
         $pageRegistry = $this->container->get('contao.routing.page_registry');
 
         $params = array_merge(
             ...array_map(
-                fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($content),
+                fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($content, $pageModel),
                 $pageRegistry->getUrlResolversForContent($content)
             )
         );

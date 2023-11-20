@@ -161,7 +161,7 @@ class PageRegistry implements ResetInterface
 
         foreach ($contentTypes as $type) {
             foreach ($this->getResolvers($type) as $resolver) {
-                foreach ($resolver->getAvailableParameters($type) as $parameter) {
+                foreach ($resolver->getAvailableParameters($type, $pageModel) as $parameter) {
                     // Resolvers are sorted by priority, so make sure the first parameter wins
                     if (isset($parameters[$type][$parameter->getName()])) {
                         continue;

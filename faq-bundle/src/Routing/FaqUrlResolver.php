@@ -40,7 +40,7 @@ class FaqUrlResolver implements ContentUrlResolverInterface
         return ContentUrlResult::create(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
-    public function getParametersForContent(object $content): array
+    public function getParametersForContent(object $content, PageModel $pageModel): array
     {
         if (!$content instanceof FaqModel) {
             throw new \InvalidArgumentException();
@@ -54,7 +54,7 @@ class FaqUrlResolver implements ContentUrlResolverInterface
         ];
     }
 
-    public function getAvailableParameters(string $contentType): array
+    public function getAvailableParameters(string $contentType, PageModel $pageModel): array
     {
         if (FaqModel::class !== $contentType) {
             return [];

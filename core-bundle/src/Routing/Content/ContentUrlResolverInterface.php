@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace Contao\CoreBundle\Routing\Content;
 
+use Contao\PageModel;
+
 interface ContentUrlResolverInterface
 {
     /**
@@ -35,7 +37,7 @@ interface ContentUrlResolverInterface
      *
      * @return array<UrlParameter>
      */
-    public function getAvailableParameters(string $contentType): array;
+    public function getAvailableParameters(string $contentType, PageModel $pageModel): array;
 
     /**
      * Returns an array of parameters for the given content that can be used
@@ -45,5 +47,5 @@ interface ContentUrlResolverInterface
      *
      * @return array<string,string|int>
      */
-    public function getParametersForContent(object $content): array;
+    public function getParametersForContent(object $content, PageModel $pageModel): array;
 }

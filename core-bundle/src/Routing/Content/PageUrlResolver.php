@@ -62,12 +62,12 @@ class PageUrlResolver implements ContentUrlResolverInterface
         return ContentUrlResult::create($content);
     }
 
-    public function getParametersForContent(object $content): array
+    public function getParametersForContent(object $content, PageModel $pageModel): array
     {
         return [];
     }
 
-    public function getAvailableParameters(string $contentType): array
+    public function getAvailableParameters(string $contentType, PageModel $pageModel): array
     {
         return [];
     }

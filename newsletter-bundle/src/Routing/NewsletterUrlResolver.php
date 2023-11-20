@@ -41,7 +41,7 @@ class NewsletterUrlResolver implements ContentUrlResolverInterface
         return ContentUrlResult::create(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
-    public function getParametersForContent(object $content): array
+    public function getParametersForContent(object $content, PageModel $pageModel): array
     {
         if (!$content instanceof NewsletterModel) {
             throw new \InvalidArgumentException();
@@ -58,7 +58,7 @@ class NewsletterUrlResolver implements ContentUrlResolverInterface
         ];
     }
 
-    public function getAvailableParameters(string $contentType): array
+    public function getAvailableParameters(string $contentType, PageModel $pageModel): array
     {
         if (NewsletterModel::class !== $contentType) {
             return [];

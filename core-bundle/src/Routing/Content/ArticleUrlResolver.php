@@ -34,7 +34,7 @@ class ArticleUrlResolver implements ContentUrlResolverInterface
         return ContentUrlResult::create(PageModel::findWithDetails($content->pid));
     }
 
-    public function getParametersForContent(object $content): array
+    public function getParametersForContent(object $content, PageModel $pageModel): array
     {
         if (!$content instanceof ArticleModel) {
             throw new \InvalidArgumentException();
@@ -43,7 +43,7 @@ class ArticleUrlResolver implements ContentUrlResolverInterface
         return ['parameters' => '/articles/' . ($content->alias ?: $content->id)];
     }
 
-    public function getAvailableParameters(string $contentType): array
+    public function getAvailableParameters(string $contentType, PageModel $pageModel): array
     {
         return [];
     }

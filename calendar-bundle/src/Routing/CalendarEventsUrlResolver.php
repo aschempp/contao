@@ -69,7 +69,7 @@ class CalendarEventsUrlResolver implements ContentUrlResolverInterface
         return ContentUrlResult::create(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
-    public function getParametersForContent(object $content): array
+    public function getParametersForContent(object $content, PageModel $pageModel): array
     {
         if (!$content instanceof CalendarEventsModel) {
             throw new \InvalidArgumentException();
@@ -86,7 +86,7 @@ class CalendarEventsUrlResolver implements ContentUrlResolverInterface
         ];
     }
 
-    public function getAvailableParameters(string $contentType): array
+    public function getAvailableParameters(string $contentType, PageModel $pageModel): array
     {
         if (CalendarEventsModel::class !== $contentType) {
             return [];

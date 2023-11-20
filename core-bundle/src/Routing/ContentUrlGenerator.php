@@ -74,7 +74,7 @@ class ContentUrlGenerator implements ResetInterface
         if ($content) {
             $params = array_merge(
                 ...array_map(
-                    fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($content),
+                    fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($content, $target),
                     $this->pageRegistry->getUrlResolversForContent($content)
                 )
             );
