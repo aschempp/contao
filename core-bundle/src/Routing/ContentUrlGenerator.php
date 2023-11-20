@@ -17,7 +17,6 @@ use Contao\CoreBundle\Routing\Page\PageRegistry;
 use Contao\CoreBundle\Routing\Page\PageRoute;
 use Contao\Model;
 use Contao\PageModel;
-use Contao\Validator;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\Mapping\MappingException;
 use Symfony\Cmf\Component\Routing\RouteObjectInterface;
@@ -44,54 +43,56 @@ class ContentUrlGenerator implements ResetInterface
     /**
      * @throws ExceptionInterface
      */
-    public function generate(object $content, array $parameters = []): string
+    public function generate(object $content, array $query = []): string
     {
-        $cacheKey = spl_object_hash($content).'__'.serialize($parameters);
+        $cacheKey = spl_object_hash($content).'__'.serialize($query);
 
         if (isset($this->urlCache[$cacheKey])) {
             return $this->urlCache[$cacheKey];
         }
 
-        // TODO: this would use the initial content instead of the last resolved one
-        // TODO: if a news resolved to an article, and the article to a page, we must
-        // TODO: use the article not the news to find parameters!!
+        [$target, $content] = $this->resolveContent($content) + [null, null];
 
-        $page = $this->resolveContent($content);
-
-        if (is_string($page)) {
-            // Insert tags should be replaced by the resolver that knows insert tags are valid input
-            // mailto:: links should only be encoded by the navigation module
-            if (Validator::isRelativeUrl($page)) {
-                $page = $this->urlGenerator->getContext()->getBaseUrl().'/'.$page;
-            }
-
-            return $this->urlCache[$cacheKey] = $page;
+        if (\is_string($target)) {
+            return $this->urlCache[$cacheKey] = $target;
         }
 
-        if (!$page instanceof PageModel) {
+        if (!$target instanceof PageModel) {
             $this->throwRouteNotFoundException($content);
         }
 
-        $route = $this->pageRegistry->getRoute($page);
-        $route->setContent($content);
-        $route->setRouteKey($this->getRouteKey($content));
+        $route = $this->pageRegistry->getRoute($target);
+
+        if ($content) {
+            $route->setContent($content);
+            $route->setRouteKey($this->getRouteKey($content));
+        }
 
         $compiledRoute = $route->compile();
+        $params = [];
 
-        $params = array_merge(
-            ...array_map(
-                fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($content),
-                $this->pageRegistry->getUrlResolversForContent($content)
-            )
-        );
+        if ($content) {
+            $params = array_merge(
+                ...array_map(
+                    fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($content),
+                    $this->pageRegistry->getUrlResolversForContent($content)
+                )
+            );
+        }
 
-        $parameters = [...$parameters, ...array_intersect_key($params, array_flip($compiledRoute->getVariables()))];
+        $parameters = array_intersect_key($params, array_flip($compiledRoute->getVariables()));
 
-        return $this->urlCache[$cacheKey] = $this->urlGenerator->generate(
+        $url = $this->urlCache[$cacheKey] = $this->urlGenerator->generate(
             PageRoute::PAGE_BASED_ROUTE_NAME,
             [...$parameters, RouteObjectInterface::ROUTE_OBJECT => $route],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
+
+        if ([] !== $query) {
+            $url .= (str_contains($url, '?') ? '&' : '?').http_build_query($query);
+        }
+
+        return $url;
     }
 
     public function getContext(): RequestContext
@@ -104,30 +105,33 @@ class ContentUrlGenerator implements ResetInterface
         $this->urlCache = [];
     }
 
-    private function resolveContent(object $content): PageModel|string
+    /**
+     * @throws ExceptionInterface
+     */
+    private function resolveContent(object ...$contents): array
     {
-        // Recursively run the loop until a PageModel is returned, and then run it again to resolve the PageModel
-        // which can possibly return a string URL. If the same result is returned as passed in, the route for that
-        // page should be generated.
-        foreach ($this->pageRegistry->getUrlResolversForContent($content) as $resolver) {
-            $result = $resolver->resolve($content);
+        foreach ($this->pageRegistry->getUrlResolversForContent($contents[0]) as $resolver) {
+            $result = $resolver->resolve($contents[0]);
 
-            if (null === $result) {
+            if ($result->isAbstained()) {
                 continue;
             }
 
-            if (is_string($result)) {
-                return $result;
+            if ($result->hasTargetUrl()) {
+                return [$result->getTargetUrl()];
             }
 
-            if ($result instanceof PageModel && $result === $content) {
-                return $content;
+            // Recursively run the loop until a PageModel is returned, and then run it again to resolve the PageModel
+            // which can possibly return a string URL. If the same result is returned as passed in, the route for that
+            // page should be generated.
+            if ($result->result instanceof PageModel && $result->result === $contents[0]) {
+                return $contents;
             }
 
-            return $this->resolveContent($result);
+            return $this->resolveContent($result->result, ...$contents);
         }
 
-        $this->throwRouteNotFoundException($content);
+        $this->throwRouteNotFoundException($contents[0]);
     }
 
     private function getRouteKey(object $content): string

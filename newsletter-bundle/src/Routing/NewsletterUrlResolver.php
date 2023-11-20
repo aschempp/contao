@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Contao\NewsletterBundle\Routing;
 
 use Contao\CoreBundle\Routing\Content\ContentUrlResolverInterface;
+use Contao\CoreBundle\Routing\Content\ContentUrlResult;
 use Contao\CoreBundle\Routing\Content\UrlParameter;
 use Contao\NewsletterModel;
 use Contao\PageModel;
@@ -31,13 +32,13 @@ class NewsletterUrlResolver implements ContentUrlResolverInterface
         return NewsletterModel::class === $contentType;
     }
 
-    public function resolve(object $content): PageModel|string|null
+    public function resolve(object $content): ContentUrlResult
     {
         if (!$content instanceof NewsletterModel) {
             throw new \InvalidArgumentException();
         }
 
-        return PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo);
+        return ContentUrlResult::create(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
     public function getParametersForContent(object $content): array

@@ -15,6 +15,7 @@ namespace Contao\NewsBundle\Routing;
 use Contao\ArticleModel;
 use Contao\CoreBundle\InsertTag\InsertTagParser;
 use Contao\CoreBundle\Routing\Content\ContentUrlResolverInterface;
+use Contao\CoreBundle\Routing\Content\ContentUrlResult;
 use Contao\CoreBundle\Routing\Content\UrlParameter;
 use Contao\NewsModel;
 use Contao\PageModel;
@@ -34,7 +35,7 @@ class NewsUrlResolver implements ContentUrlResolverInterface
         return NewsModel::class === $contentType;
     }
 
-    public function resolve(object $content): PageModel|string|null
+    public function resolve(object $content): ContentUrlResult
     {
         if (!$content instanceof NewsModel) {
             throw new \InvalidArgumentException();
@@ -43,14 +44,14 @@ class NewsUrlResolver implements ContentUrlResolverInterface
         switch ($content->source) {
             // Link to an external page
             case 'external':
-                return $this->insertTagParser->replaceInline($content->url);
+                return ContentUrlResult::absoluteUrl($this->insertTagParser->replaceInline($content->url));
 
             // Link to an internal page
             case 'internal':
                 $page = $content->getRelated('jumpTo');
 
                 if ($page instanceof PageModel) {
-                    return $page;
+                    return ContentUrlResult::create($page);
                 }
                 break;
 
@@ -59,13 +60,13 @@ class NewsUrlResolver implements ContentUrlResolverInterface
                 $article = ArticleModel::findByPk($content->articleId);
 
                 if ($article instanceof ArticleModel) {
-                    return $article;
+                    return ContentUrlResult::create($article);
                 }
                 break;
         }
 
         // Link to the default page
-        return PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo);
+        return ContentUrlResult::create(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
     public function getParametersForContent(object $content): array

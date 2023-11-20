@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Contao\FaqBundle\Routing;
 
 use Contao\CoreBundle\Routing\Content\ContentUrlResolverInterface;
+use Contao\CoreBundle\Routing\Content\ContentUrlResult;
 use Contao\CoreBundle\Routing\Content\UrlParameter;
 use Contao\FaqModel;
 use Contao\PageModel;
@@ -30,13 +31,13 @@ class FaqUrlResolver implements ContentUrlResolverInterface
         return FaqModel::class === $contentType;
     }
 
-    public function resolve(object $content): PageModel|string|null
+    public function resolve(object $content): ContentUrlResult
     {
         if (!$content instanceof FaqModel) {
             throw new \InvalidArgumentException();
         }
 
-        return PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo);
+        return ContentUrlResult::create(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
     public function getParametersForContent(object $content): array

@@ -30,20 +30,20 @@ class PageUrlResolver implements ContentUrlResolverInterface
         return PageModel::class === $contentType;
     }
 
-    public function resolve(object $content): PageModel|string
+    public function resolve(object $content): ContentUrlResult
     {
         if (!$content instanceof PageModel) {
             throw new \InvalidArgumentException();
         }
 
         if ($resolver = $this->pageRegistry->getPageUrlResolver($content)) {
-            return $resolver->resolvePageUrl($content);
+            return ContentUrlResult::create($resolver->resolvePageUrl($content));
         }
 
         // Handle legacy page types until they have a page controller
         switch ($content->type) {
             case 'redirect':
-                return $this->insertTagParser->replaceInline($content->url);
+                return ContentUrlResult::absoluteUrl($this->insertTagParser->replaceInline($content->url));
 
             case 'forward':
                 if ($content->jumpTo) {
@@ -56,10 +56,10 @@ class PageUrlResolver implements ContentUrlResolverInterface
                     throw new ForwardPageNotFoundException();
                 }
 
-                return $forwardPage;
+                return ContentUrlResult::create($forwardPage);
         }
 
-        return $content;
+        return ContentUrlResult::create($content);
     }
 
     public function getParametersForContent(object $content): array

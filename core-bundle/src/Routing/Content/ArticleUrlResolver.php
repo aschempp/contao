@@ -25,13 +25,13 @@ class ArticleUrlResolver implements ContentUrlResolverInterface
     /**
      * @param ArticleModel $content
      */
-    public function resolve(object $content): PageModel
+    public function resolve(object $content): ContentUrlResult
     {
         if (!$content instanceof ArticleModel) {
             throw new \InvalidArgumentException();
         }
 
-        return PageModel::findWithDetails($content->pid);
+        return ContentUrlResult::create(PageModel::findWithDetails($content->pid));
     }
 
     public function getParametersForContent(object $content): array
