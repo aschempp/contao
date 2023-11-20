@@ -16,5 +16,4 @@ use Contao\CoreBundle\Tests\TestCase;
 
 class ContentUrlGeneratorTest extends TestCase
 {
-
 }

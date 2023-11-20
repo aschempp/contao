@@ -16,12 +16,9 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ContentUrlGenerator;
 use Contao\CoreBundle\Util\UrlUtil;
 use Contao\Environment;
-use Contao\FaqCategoryModel;
 use Contao\FaqModel;
-use Contao\PageModel;
 use Contao\StringUtil;
 use Symfony\Component\Routing\Exception\ExceptionInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * @internal

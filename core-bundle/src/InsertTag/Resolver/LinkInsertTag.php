@@ -26,7 +26,6 @@ use Contao\FrontendUser;
 use Contao\PageModel;
 use Contao\StringUtil;
 use Symfony\Component\Routing\Exception\ExceptionInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class LinkInsertTag
 {

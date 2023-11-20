@@ -1086,7 +1086,7 @@ class PageModel extends Model
 	 */
 	public function getFrontendUrl($strParams=null)
 	{
-		trigger_deprecation('contao/core-bundle', '5.3', __METHOD__.' is deprecated, use the content URL generator instead.');
+		trigger_deprecation('contao/core-bundle', '5.3', __METHOD__ . ' is deprecated, use the content URL generator instead.');
 
 		$this->loadDetails();
 
@@ -1132,7 +1132,7 @@ class PageModel extends Model
 	 */
 	public function getAbsoluteUrl($strParams=null)
 	{
-		trigger_deprecation('contao/core-bundle', '5.3', __METHOD__.' is deprecated, use the content URL generator instead.');
+		trigger_deprecation('contao/core-bundle', '5.3', __METHOD__ . ' is deprecated, use the content URL generator instead.');
 
 		$this->loadDetails();
 
@@ -1178,7 +1178,7 @@ class PageModel extends Model
 	 */
 	public function getPreviewUrl($strParams=null)
 	{
-		trigger_deprecation('contao/core-bundle', '5.3', __METHOD__.' is deprecated, use the content URL generator instead.');
+		trigger_deprecation('contao/core-bundle', '5.3', __METHOD__ . ' is deprecated, use the content URL generator instead.');
 
 		$container = System::getContainer();
 

@@ -48,7 +48,7 @@ class NewsletterUrlResolver implements ContentUrlResolverInterface
         }
 
         return [
-            'parameters' => '/' . ($content->alias ?: $content->id),
+            'parameters' => '/'.($content->alias ?: $content->id),
             'alias' => ($content->alias ?: $content->id),
             'id' => (int) $content->id,
             'subject' => StringUtil::standardize($content->subject),

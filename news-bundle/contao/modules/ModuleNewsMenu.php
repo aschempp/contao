@@ -75,10 +75,13 @@ class ModuleNewsMenu extends ModuleNews
 
 		if (($objTarget = $this->objModel->getRelated('jumpTo')) instanceof PageModel)
 		{
-			try {
+			try
+			{
 				/** @var PageModel $objTarget */
 				$this->strUrl = $objTarget->getFrontendUrl();
-			} catch (ExceptionInterface) {
+			}
+			catch (ExceptionInterface)
+			{
 				// keep the current request URI
 			}
 		}

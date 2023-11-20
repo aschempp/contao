@@ -18,7 +18,6 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\Page\PageRegistry;
 use Contao\CoreBundle\Routing\Page\PageRoute;
 use Contao\DataContainer;
-use Contao\NewsModel;
 use Contao\PageModel;
 use Contao\StringUtil;
 use Twig\Environment;

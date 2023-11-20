@@ -14,7 +14,6 @@ namespace Contao\CoreBundle\Routing\Page;
 
 use Contao\CoreBundle\Routing\Content\ContentUrlResolverInterface;
 use Contao\CoreBundle\Routing\Content\UrlParameter;
-use Contao\NewsModel;
 use Contao\PageModel;
 use Doctrine\DBAL\Connection;
 use Symfony\Contracts\Service\ResetInterface;
@@ -193,12 +192,11 @@ class PageRegistry implements ResetInterface
     }
 
     /**
-     * @param object $content
      * @return array<ContentUrlResolverInterface>
      */
     public function getUrlResolversForContent(object $content): array
     {
-        return $this->getResolvers(get_class($content));
+        return $this->getResolvers(\get_class($content));
     }
 
     /**
@@ -290,7 +288,7 @@ class PageRegistry implements ResetInterface
         return $types;
     }
 
-    public function reset()
+    public function reset(): void
     {
         $this->urlPrefixes = null;
         $this->urlSuffixes = null;
@@ -346,7 +344,7 @@ class PageRegistry implements ResetInterface
 
         return $this->resolverMap[$type] = array_filter(
             $this->contentResolvers,
-            fn (ContentUrlResolverInterface $resolver) => $resolver->supportsType($type)
+            static fn (ContentUrlResolverInterface $resolver) => $resolver->supportsType($type)
         );
     }
 }

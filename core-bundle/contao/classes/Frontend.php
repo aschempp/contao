@@ -168,7 +168,7 @@ abstract class Frontend extends Controller
 			{
 				$urlGenerator = System::getContainer()->get('contao.routing.content_url_generator');
 
-				$this->redirect($urlGenerator->generate($objNextPage, $strParams ? ['parameters' => $strParams] : []));
+				$this->redirect($urlGenerator->generate($objNextPage, $strParams ? array('parameters' => $strParams) : array()));
 			}
 			catch (ExceptionInterface)
 			{

@@ -12,7 +12,6 @@ namespace Contao;
 
 use Contao\CoreBundle\Util\UrlUtil;
 use Symfony\Component\Routing\Exception\ExceptionInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Provide methods regarding news archives.
@@ -30,11 +29,11 @@ class News extends Frontend
 	 */
 	public static function generateNewsUrl($objItem, $blnAddArchive=false, $blnAbsolute=true)
 	{
-		trigger_deprecation('contao/core-bundle', '5.3', __METHOD__.' is deprecated, use the content URL generator instead.');
+		trigger_deprecation('contao/core-bundle', '5.3', __METHOD__ . ' is deprecated, use the content URL generator instead.');
 
 		try
 		{
-			$parameters = [];
+			$parameters = array();
 
 			// Add the current archive parameter (news archive)
 			if ($blnAddArchive && Input::get('month'))

@@ -40,7 +40,7 @@ class ArticleUrlResolver implements ContentUrlResolverInterface
             throw new \InvalidArgumentException();
         }
 
-        return ['parameters' => '/articles/' . ($content->alias ?: $content->id)];
+        return ['parameters' => '/articles/'.($content->alias ?: $content->id)];
     }
 
     public function getAvailableParameters(string $contentType, PageModel $pageModel): array

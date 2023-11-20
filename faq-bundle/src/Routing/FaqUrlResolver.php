@@ -47,7 +47,7 @@ class FaqUrlResolver implements ContentUrlResolverInterface
         }
 
         return [
-            'parameters' => '/' . ($content->alias ?: $content->id),
+            'parameters' => '/'.($content->alias ?: $content->id),
             'alias' => ($content->alias ?: $content->id),
             'id' => (int) $content->id,
             'question' => StringUtil::standardize($content->question),

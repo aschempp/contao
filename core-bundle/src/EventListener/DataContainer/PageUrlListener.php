@@ -22,9 +22,7 @@ use Contao\CoreBundle\Routing\Page\PageRoute;
 use Contao\CoreBundle\Slug\Slug;
 use Contao\DataContainer;
 use Contao\Input;
-use Contao\NewsModel;
 use Contao\PageModel;
-use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use Symfony\Cmf\Component\Routing\NestedMatcher\FinalMatcherInterface;
 use Symfony\Cmf\Component\Routing\RouteObjectInterface;
@@ -107,7 +105,7 @@ class PageUrlListener
             foreach ($parameters as $parameter) {
                 if ($parameter->isIdentifier()) {
                     $value .= sprintf('/{%s}', $parameter->getName());
-                    break(2);
+                    break 2;
                 }
             }
         }
@@ -365,7 +363,7 @@ class PageUrlListener
                     $hasIdentifier = true;
                 }
 
-                continue(2);
+                continue 2;
             }
 
             throw new \RuntimeException('Invalid parameter: '.$match);

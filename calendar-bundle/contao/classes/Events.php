@@ -397,7 +397,7 @@ abstract class Events extends Module
 	 */
 	public static function generateEventUrl($objEvent, $blnAbsolute=false)
 	{
-		trigger_deprecation('contao/core-bundle', '5.3', __METHOD__.' is deprecated, use the content URL generator instead.');
+		trigger_deprecation('contao/core-bundle', '5.3', __METHOD__ . ' is deprecated, use the content URL generator instead.');
 
 		try
 		{

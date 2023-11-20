@@ -75,7 +75,7 @@ class LogoutPageController extends AbstractController implements UrlResolverInte
             return $strRedirect;
         }
 
-        $pairs = array();
+        $pairs = [];
         $strLogoutUrl = $this->logoutUrlGenerator->getLogoutUrl();
         $request = Request::create($strLogoutUrl);
 

@@ -31,7 +31,6 @@ use Contao\Frontend;
 use Contao\FrontendTemplate;
 use Contao\FrontendUser;
 use Contao\Idna;
-use Contao\PageModel;
 use Contao\StringUtil;
 use Contao\System;
 use Contao\Validator;

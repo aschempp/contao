@@ -74,7 +74,7 @@ class ContentUrlGenerator implements ResetInterface
         if ($content) {
             $params = array_merge(
                 ...array_map(
-                    fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($content, $target),
+                    static fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($content, $target),
                     $this->pageRegistry->getUrlResolversForContent($content)
                 )
             );
@@ -147,7 +147,7 @@ class ContentUrlGenerator implements ResetInterface
         }
 
         if (null === $metadata) {
-            return get_class($content).'->'.spl_object_hash($content);
+            return \get_class($content).'->'.spl_object_hash($content);
         }
 
         $identifier = $this->entityManager
