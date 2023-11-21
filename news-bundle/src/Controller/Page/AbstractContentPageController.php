@@ -45,7 +45,7 @@ abstract class AbstractContentPageController extends AbstractController
         if (!$this->validateContentParameters($request, $content, $pageModel)) {
             if ($pageModel->redirectParameters) {
                 return new RedirectResponse(
-                    $this->generateContentUrl($content, [], UrlGeneratorInterface::ABSOLUTE_URL),
+                    $this->generateContentUrl($content),
                     Response::HTTP_MOVED_PERMANENTLY,
                 );
             }

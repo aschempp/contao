@@ -128,11 +128,11 @@ abstract class AbstractController extends SymfonyAbstractController
         return $response;
     }
 
-    protected function generateContentUrl(object $content, array $parameters = [], int $referenceType = UrlGeneratorInterface::ABSOLUTE_URL): string
+    protected function generateContentUrl(object $content, array $query = []): string
     {
         return $this->container
             ->get('contao.routing.content_url_generator')
-            ->generate($content, $parameters, $referenceType)
+            ->generate($content, $query)
         ;
     }
 }
