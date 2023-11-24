@@ -13,9 +13,9 @@ declare(strict_types=1);
 namespace Contao\NewsBundle\Routing;
 
 use Contao\ArticleModel;
-use Contao\CoreBundle\InsertTag\InsertTagParser;
 use Contao\CoreBundle\Routing\Content\ContentUrlResolverInterface;
 use Contao\CoreBundle\Routing\Content\ContentUrlResult;
+use Contao\CoreBundle\Routing\Content\StringUrl;
 use Contao\CoreBundle\Routing\Content\UrlParameter;
 use Contao\NewsModel;
 use Contao\PageModel;
@@ -24,10 +24,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class NewsUrlResolver implements ContentUrlResolverInterface
 {
-    public function __construct(
-        private readonly InsertTagParser $insertTagParser,
-        private readonly TranslatorInterface $translator,
-    ) {
+    public function __construct(private readonly TranslatorInterface $translator)
+    {
     }
 
     public function supportsType(string $contentType): bool
@@ -44,7 +42,7 @@ class NewsUrlResolver implements ContentUrlResolverInterface
         switch ($content->source) {
             // Link to an external page
             case 'external':
-                return ContentUrlResult::absoluteUrl($this->insertTagParser->replaceInline($content->url));
+                return ContentUrlResult::create(new StringUrl($content->url));
 
             // Link to an internal page
             case 'internal':

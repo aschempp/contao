@@ -116,7 +116,6 @@ services:
     contao_news.routing.news_url_resolver:
         class: Contao\NewsBundle\Routing\NewsUrlResolver
         arguments:
-            - '@contao.insert_tag.parser'
             - '@translator'
 
     contao_news.security.news_archive_access_voter:

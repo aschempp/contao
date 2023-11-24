@@ -13,16 +13,13 @@ declare(strict_types=1);
 namespace Contao\CoreBundle\Routing\Content;
 
 use Contao\CoreBundle\Exception\ForwardPageNotFoundException;
-use Contao\CoreBundle\InsertTag\InsertTagParser;
 use Contao\CoreBundle\Routing\Page\PageRegistry;
 use Contao\PageModel;
 
 class PageUrlResolver implements ContentUrlResolverInterface
 {
-    public function __construct(
-        private readonly PageRegistry $pageRegistry,
-        private readonly InsertTagParser $insertTagParser,
-    ) {
+    public function __construct(private readonly PageRegistry $pageRegistry)
+    {
     }
 
     public function supportsType(string $contentType): bool
@@ -43,7 +40,7 @@ class PageUrlResolver implements ContentUrlResolverInterface
         // Handle legacy page types until they have a page controller
         switch ($content->type) {
             case 'redirect':
-                return ContentUrlResult::absoluteUrl($this->insertTagParser->replaceInline($content->url));
+                return ContentUrlResult::create(new StringUrl($content->url));
 
             case 'forward':
                 if ($content->jumpTo) {

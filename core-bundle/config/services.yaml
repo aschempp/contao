@@ -654,7 +654,6 @@ services:
         class: Contao\CoreBundle\Routing\Content\PageUrlResolver
         arguments:
             - '@contao.routing.page_registry'
-            - '@contao.insert_tag.parser'
 
     contao.routing.content.article_resolver:
         class: Contao\CoreBundle\Routing\Content\ArticleUrlResolver

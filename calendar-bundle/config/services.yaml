@@ -70,5 +70,4 @@ services:
     contao_calendar.routing.calendar_events_url_resolver:
         class: Contao\CalendarBundle\Routing\CalendarEventsUrlResolver
         arguments:
-            - '@contao.insert_tag.parser'
             - '@translator'
