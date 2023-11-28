@@ -112,6 +112,13 @@ services:
         arguments:
             - '@database_connection'
             - '@translator'
+            -
+    contao.listener.data_container.page_content_type_options:
+        class: Contao\CoreBundle\EventListener\DataContainer\PageContentTypeOptionsListener
+        public: true
+        arguments:
+            - '@contao.routing.page_registry'
+            - '@translator'
 
     contao.listener.data_container.page_routing:
         class: Contao\CoreBundle\EventListener\DataContainer\PageRoutingListener

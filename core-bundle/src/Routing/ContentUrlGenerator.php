@@ -37,6 +37,7 @@ class ContentUrlGenerator implements ResetInterface
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly PageRegistry $pageRegistry,
         private readonly EntityManagerInterface $entityManager,
+        private readonly iterable $urlResolvers,
     ) {
     }
 
@@ -75,7 +76,7 @@ class ContentUrlGenerator implements ResetInterface
             $params = array_merge(
                 ...array_map(
                     static fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($content, $target),
-                    $this->pageRegistry->getUrlResolversForContent($content)
+                    $this->pageRegistry->getParameterResolvers()
                 )
             );
         }
@@ -110,7 +111,7 @@ class ContentUrlGenerator implements ResetInterface
      */
     private function resolveContent(object ...$contents): array
     {
-        foreach ($this->pageRegistry->getUrlResolversForContent($contents[0]) as $resolver) {
+        foreach ($this->urlResolvers as $resolver) {
             $result = $resolver->resolve($contents[0]);
 
             if ($result->isAbstained()) {

@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Contao\NewsBundle\Routing;
 
 use Contao\ArticleModel;
+use Contao\CoreBundle\Routing\Content\ContentParameterResolverInterface;
 use Contao\CoreBundle\Routing\Content\ContentUrlResolverInterface;
 use Contao\CoreBundle\Routing\Content\ContentUrlResult;
 use Contao\CoreBundle\Routing\Content\StringUrl;
@@ -22,21 +23,16 @@ use Contao\PageModel;
 use Contao\StringUtil;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class NewsUrlResolver implements ContentUrlResolverInterface
+class NewsResolver implements ContentUrlResolverInterface, ContentParameterResolverInterface
 {
     public function __construct(private readonly TranslatorInterface $translator)
     {
     }
 
-    public function supportsType(string $contentType): bool
-    {
-        return NewsModel::class === $contentType;
-    }
-
     public function resolve(object $content): ContentUrlResult
     {
         if (!$content instanceof NewsModel) {
-            throw new \InvalidArgumentException();
+            return ContentUrlResult::abstain();
         }
 
         switch ($content->source) {
@@ -67,10 +63,32 @@ class NewsUrlResolver implements ContentUrlResolverInterface
         return ContentUrlResult::create(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
+    public function getContentType(): string
+    {
+        return NewsModel::getTable();
+    }
+
+    public function loadContent(string $identifier, UrlParameter $urlParameter, PageModel $pageModel): object|null
+    {
+        return NewsModel::findPublishedByIdOrAlias($identifier);
+    }
+
+    public function getAvailableParameters(PageModel $pageModel): array
+    {
+        return [
+            new UrlParameter('alias', $this->describeParameter('alias'), identifier: true),
+            new UrlParameter('id', $this->describeParameter('id'), requirement: '\d+', identifier: true),
+            new UrlParameter('headline', $this->describeParameter('headline')),
+            new UrlParameter('year', $this->describeParameter('year'), '\d{4}', date('Y')),
+            new UrlParameter('month', $this->describeParameter('month'), '\d{2}', date('m')),
+            new UrlParameter('day', $this->describeParameter('day'), '\d{2}', date('d')),
+        ];
+    }
+
     public function getParametersForContent(object $content, PageModel $pageModel): array
     {
         if (!$content instanceof NewsModel) {
-            throw new \InvalidArgumentException();
+            return [];
         }
 
         return [
@@ -81,22 +99,6 @@ class NewsUrlResolver implements ContentUrlResolverInterface
             'year' => date('Y', (int) $content->time),
             'month' => date('m', (int) $content->time),
             'day' => date('d', (int) $content->time),
-        ];
-    }
-
-    public function getAvailableParameters(string $contentType, PageModel $pageModel): array
-    {
-        if (NewsModel::class !== $contentType) {
-            return [];
-        }
-
-        return [
-            new UrlParameter('alias', $this->describeParameter('alias'), identifier: true),
-            new UrlParameter('id', $this->describeParameter('id'), requirement: '\d+', identifier: true),
-            new UrlParameter('headline', $this->describeParameter('headline')),
-            new UrlParameter('year', $this->describeParameter('year'), requirement: '\d{4}'),
-            new UrlParameter('month', $this->describeParameter('month'), requirement: '\d{2}'),
-            new UrlParameter('day', $this->describeParameter('day'), requirement: '\d{2}'),
         ];
     }
 

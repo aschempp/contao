@@ -16,21 +16,16 @@ use Contao\CoreBundle\Exception\ForwardPageNotFoundException;
 use Contao\CoreBundle\Routing\Page\PageRegistry;
 use Contao\PageModel;
 
-class PageUrlResolver implements ContentUrlResolverInterface
+class PageResolver implements ContentUrlResolverInterface
 {
     public function __construct(private readonly PageRegistry $pageRegistry)
     {
     }
 
-    public function supportsType(string $contentType): bool
-    {
-        return PageModel::class === $contentType;
-    }
-
     public function resolve(object $content): ContentUrlResult
     {
         if (!$content instanceof PageModel) {
-            throw new \InvalidArgumentException();
+            return ContentUrlResult::abstain();
         }
 
         if ($resolver = $this->pageRegistry->getPageUrlResolver($content)) {
@@ -57,15 +52,5 @@ class PageUrlResolver implements ContentUrlResolverInterface
         }
 
         return ContentUrlResult::create($content);
-    }
-
-    public function getParametersForContent(object $content, PageModel $pageModel): array
-    {
-        return [];
-    }
-
-    public function getAvailableParameters(string $contentType, PageModel $pageModel): array
-    {
-        return [];
     }
 }

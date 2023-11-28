@@ -52,9 +52,9 @@ class PageUrlListener
     public function generateAlias(string $value, DataContainer $dc): string
     {
         // TODO: improve validation of parameters in alias
-        if (!preg_match('(^(?!/)[\w/.\-{}]+(?<!/)$)u', $value)) {
-            throw new \RuntimeException($GLOBALS['TL_LANG']['ERR']['folderalias']);
-        }
+        //if (!preg_match('(^(?!/)[\w/.\-{}]+(?<!/)$)u', $value)) {
+        //    throw new \RuntimeException($GLOBALS['TL_LANG']['ERR']['folderalias']);
+        //}
 
         $pageAdapter = $this->framework->getAdapter(PageModel::class);
 
@@ -65,14 +65,16 @@ class PageUrlListener
         $this->addInputToPage($pageModel);
         $isRoutable = $this->pageRegistry->isRoutable($pageModel);
 
-        $typedParameters = $this->pageRegistry->getUrlParameters($pageModel);
+        $parameters = $this->pageRegistry->getUrlParameters($pageModel);
 
         if ('' !== $value) {
             if (preg_match('/^[1-9]\d*$/', $value)) {
                 throw new \RuntimeException($this->translator->trans('ERR.aliasNumeric', [], 'contao_default'));
             }
 
-            $this->validateParameters($value, $typedParameters);
+            if (str_contains($value, '{')) {
+                $this->validateParameters($value, $parameters, $pageModel);
+            }
 
             if ($isRoutable) {
                 try {
@@ -101,12 +103,10 @@ class PageUrlListener
             $value = $pageModel->folderUrl.$value;
         }
 
-        foreach ($typedParameters as $parameters) {
-            foreach ($parameters as $parameter) {
-                if ($parameter->isIdentifier()) {
-                    $value .= sprintf('/{%s}', $parameter->getName());
-                    break 2;
-                }
+        foreach ($parameters as $parameter) {
+            if ($parameter->isIdentifier()) {
+                $value .= sprintf('/{%s}', $parameter->getName());
+                break;
             }
         }
 
@@ -310,7 +310,7 @@ class PageUrlListener
         }
 
         if (null !== ($requireItem = $input->post('requireItem'))) {
-            $pageModel->requireItem = (bool) $requireItem;
+            $pageModel->requireItem = $requireItem;
         }
 
         if ('root' === $pageModel->type) {
@@ -331,46 +331,30 @@ class PageUrlListener
     /**
      * @param array<string,array<string,UrlParameter>> $typedParameters
      */
-    private function validateParameters(string $value, array $typedParameters): void
+    private function validateParameters(string $value, array $parameters, PageModel $pageModel): void
     {
         if (!preg_match('(^[\w/.\-]+(/|$))u', $value)) {
             throw new \RuntimeException('must start with a prefix');
         }
 
-        // No need to validate, the alias does not start or end with slash, since
-        // that is already validated initially in generateAlias()
-        if (!preg_match_all('@/.*?{([^}]+)}@u', $value, $matches)) {
-            if ([] === $typedParameters) {
-                return;
-            }
-
-            throw new \RuntimeException('Invalid or missing parameters.');
-        }
+        $pageModel->alias = $value;
+        $route = $this->pageRegistry->getRoute($pageModel);
+        $compiledRoute = $route->compile();
 
         $hasIdentifier = false;
 
-        foreach ($matches[1] as $match) {
-            foreach ($typedParameters as $parameters) {
-                if (!isset($parameters[$match])) {
-                    continue;
-                }
-
-                if ($parameters[$match]->isIdentifier()) {
-                    if ($hasIdentifier) {
-                        throw new \RuntimeException('Must not have more than one identifier parameter.');
-                    }
-
-                    $hasIdentifier = true;
-                }
-
-                continue 2;
+        foreach ($compiledRoute->getVariables() as $match) {
+            if (!isset($parameters[$match])) {
+                throw new \RuntimeException('Invalid parameter: '.$match);
             }
 
-            throw new \RuntimeException('Invalid parameter: '.$match);
-        }
+            if ($parameters[$match]->isIdentifier()) {
+                if ($hasIdentifier) {
+                    throw new \RuntimeException('Must not have more than one identifier parameter.');
+                }
 
-        if (!$hasIdentifier) {
-            throw new \RuntimeException('Must add at least one identifier parameter.');
+                $hasIdentifier = true;
+            }
         }
     }
 }

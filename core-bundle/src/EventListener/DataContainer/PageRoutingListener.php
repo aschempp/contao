@@ -56,7 +56,7 @@ class PageRoutingListener
 
         $parameters = $this->pageRegistry->getUrlParameters($pageModel);
 
-        if (empty($parameters)) {
+        if (!$parameters) {
             return '';
         }
 

@@ -18,7 +18,7 @@ final class UrlParameter
         private readonly string $name,
         private readonly string $description = '',
         private readonly string|null $requirement = null,
-        private readonly int|string|null $default = null,
+        private readonly int|string|null|false $default = false,
         private readonly bool $identifier = false,
     ) {
     }
@@ -38,7 +38,7 @@ final class UrlParameter
         return $this->requirement;
     }
 
-    public function getDefault(): int|string|null
+    public function getDefault(): int|string|null|false
     {
         return $this->default;
     }

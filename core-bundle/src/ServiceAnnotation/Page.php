@@ -31,8 +31,6 @@ final class Page implements ServiceTagInterface
 
     private bool $contentComposition = true;
 
-    private array $contentTypes = [];
-
     private string|null $urlSuffix = null;
 
     private array $requirements = [];
@@ -88,7 +86,6 @@ final class Page implements ServiceTagInterface
         return [
             'type' => $this->type,
             'contentComposition' => $this->contentComposition,
-            'contentTypes' => $this->contentTypes,
             'path' => $this->path,
             'urlSuffix' => $this->urlSuffix,
             'requirements' => $this->requirements,
@@ -116,16 +113,6 @@ final class Page implements ServiceTagInterface
     public function setContentComposition(bool $contentComposition): void
     {
         $this->contentComposition = $contentComposition;
-    }
-
-    public function getContentTypes(): array
-    {
-        return $this->contentTypes;
-    }
-
-    public function setContentTypes(array $contentTypes): void
-    {
-        $this->contentTypes = $contentTypes;
     }
 
     public function setPath(bool|string|null $path): void

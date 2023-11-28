@@ -14,7 +14,6 @@ namespace Contao\CoreBundle\Command;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\Page\ContentCompositionInterface;
-use Contao\CoreBundle\Routing\Page\ContentTypesInterface;
 use Contao\CoreBundle\Routing\Page\DynamicRouteInterface;
 use Contao\CoreBundle\Routing\Page\PageRegistry;
 use Contao\CoreBundle\Routing\Page\RouteConfig;
@@ -46,11 +45,6 @@ class DebugPagesCommand extends Command
      */
     private array $contentComposition = [];
 
-    /**
-     * @var array<string,ContentTypesInterface|array>
-     */
-    private array $contentTypes = [];
-
     public function __construct(
         private readonly ContaoFramework $framework,
         private readonly PageRegistry $pageRegistry,
@@ -58,7 +52,7 @@ class DebugPagesCommand extends Command
         parent::__construct();
     }
 
-    public function add(string $type, RouteConfig $config, DynamicRouteInterface|null $routeEnhancer = null, ContentCompositionInterface|bool $contentComposition = true, ContentTypesInterface|array $contentTypes = []): void
+    public function add(string $type, RouteConfig $config, DynamicRouteInterface|null $routeEnhancer = null, ContentCompositionInterface|bool $contentComposition = true): void
     {
         $this->routeConfigs[$type] = $config;
 
@@ -67,7 +61,6 @@ class DebugPagesCommand extends Command
         }
 
         $this->contentComposition[$type] = $contentComposition;
-        $this->contentTypes[$type] = $contentTypes;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -92,12 +85,6 @@ class DebugPagesCommand extends Command
                 $contentComposition = 'dynamic';
             }
 
-            if (($this->contentTypes[$type] ?? null) instanceof ContentTypesInterface) {
-                $contentTypes = 'dynamic';
-            } else {
-                $contentTypes = $this->generateArray($this->contentTypes[$type] ?? []);
-            }
-
             $rows[] = [
                 $type,
                 $config?->getPath() ? $config->getPath() : '*',
@@ -107,12 +94,11 @@ class DebugPagesCommand extends Command
                 $config ? $this->generateArray($config->getRequirements()) : '-',
                 $config ? $this->generateArray($config->getDefaults()) : '-',
                 $config ? $this->generateArray($config->getOptions()) : '-',
-                $contentTypes,
             ];
         }
 
         $io->title('Contao Pages');
-        $io->table(['Type', 'Path', 'URL Suffix', 'Content Composition', 'Route Enhancer', 'Requirements', 'Defaults', 'Options', 'Content Types'], $rows);
+        $io->table(['Type', 'Path', 'URL Suffix', 'Content Composition', 'Route Enhancer', 'Requirements', 'Defaults', 'Options'], $rows);
 
         return Command::SUCCESS;
     }

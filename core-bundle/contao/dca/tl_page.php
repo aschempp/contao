@@ -227,15 +227,11 @@ $GLOBALS['TL_DCA']['tl_page'] = array
 		),
 		'requireItem' => array
 		(
-			'inputType'               => 'checkbox',
-			'eval'                    => array('tl_class'=>'w50 m12'),
-			'sql'                     => array('type' => 'boolean', 'default' => false)
-		),
-		'redirectParameters' => array
-		(
-			'inputType'               => 'checkbox',
-			'eval'                    => array('tl_class'=>'w50 m12'),
-			'sql'                     => array('type' => 'boolean', 'default' => true)
+			'inputType'               => 'select',
+			// input_field_callback from PageContentTypeOptionsListener
+			'reference'               => &$GLOBALS['TL_LANG']['tl_page']['requiredItems'],
+			'eval'                    => array('includeBlankOption' => true, 'blankOptionLabel' => &$GLOBALS['TL_LANG']['tl_page']['requireItem'][2], 'submitOnChange' => true, 'decodeEntities' => true, 'helpwizard' => true, 'tl_class'=>'w50'),
+			'sql'                     => "varchar(64) NOT NULL default ''"
 		),
 		'routePath' => array
 		(

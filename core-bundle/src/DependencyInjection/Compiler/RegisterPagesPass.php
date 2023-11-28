@@ -13,7 +13,6 @@ declare(strict_types=1);
 namespace Contao\CoreBundle\DependencyInjection\Compiler;
 
 use Contao\CoreBundle\Routing\Page\ContentCompositionInterface;
-use Contao\CoreBundle\Routing\Page\ContentTypesInterface;
 use Contao\CoreBundle\Routing\Page\DynamicRouteInterface;
 use Contao\CoreBundle\Routing\Page\RouteConfig;
 use Contao\CoreBundle\Routing\Page\UrlResolverInterface;
@@ -47,7 +46,6 @@ class RegisterPagesPass implements CompilerPassInterface
         }
 
         $this->registerPages($container);
-        $this->registerContentUrlResolvers($container);
     }
 
     protected function registerPages(ContainerBuilder $container): void
@@ -68,7 +66,6 @@ class RegisterPagesPass implements CompilerPassInterface
             foreach ($tags as $attributes) {
                 $routeEnhancer = null;
                 $contentComposition = (bool) ($attributes['contentComposition'] ?? true);
-                $contentTypes = (array) ($attributes['contentTypes'] ?? []);
                 $class = $definition->getClass();
                 $type = $this->getPageType($class, $attributes);
 
@@ -80,13 +77,9 @@ class RegisterPagesPass implements CompilerPassInterface
                     $contentComposition = $reference;
                 }
 
-                if (is_a($class, ContentTypesInterface::class, true)) {
-                    $contentTypes = $reference;
-                }
-
                 $config = $this->getRouteConfig($reference, $definition, $attributes);
-                $registry->addMethodCall('add', [$type, $config, $routeEnhancer, $contentComposition, $contentTypes]);
-                $command?->addMethodCall('add', [$type, $config, $routeEnhancer, $contentComposition, $contentTypes]);
+                $registry->addMethodCall('add', [$type, $config, $routeEnhancer, $contentComposition]);
+                $command?->addMethodCall('add', [$type, $config, $routeEnhancer, $contentComposition]);
             }
         }
     }
@@ -159,13 +152,5 @@ class RegisterPagesPass implements CompilerPassInterface
         }
 
         return Container::underscore($className);
-    }
-
-    private function registerContentUrlResolvers(ContainerBuilder $container): void
-    {
-        $definition = $container->findDefinition('contao.routing.page_registry');
-        $references = $this->findAndSortTaggedServices('contao.content_url_resolver', $container);
-
-        $definition->addMethodCall('setContentUrlResolvers', [$references]);
     }
 }

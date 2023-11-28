@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Contao\NewsletterBundle\Routing;
 
+use Contao\CoreBundle\Routing\Content\ContentParameterResolverInterface;
 use Contao\CoreBundle\Routing\Content\ContentUrlResolverInterface;
 use Contao\CoreBundle\Routing\Content\ContentUrlResult;
 use Contao\CoreBundle\Routing\Content\UrlParameter;
@@ -20,31 +21,48 @@ use Contao\PageModel;
 use Contao\StringUtil;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class NewsletterUrlResolver implements ContentUrlResolverInterface
+class NewsletterResolver implements ContentUrlResolverInterface, ContentParameterResolverInterface
 {
     public function __construct(
         private readonly TranslatorInterface $translator,
     ) {
     }
 
-    public function supportsType(string $contentType): bool
-    {
-        return NewsletterModel::class === $contentType;
-    }
-
     public function resolve(object $content): ContentUrlResult
     {
         if (!$content instanceof NewsletterModel) {
-            throw new \InvalidArgumentException();
+            return ContentUrlResult::abstain();
         }
 
         return ContentUrlResult::create(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
+    public function getContentType(): string
+    {
+        return NewsletterModel::getTable();
+    }
+
+    public function loadContent(string $identifier, UrlParameter $urlParameter, PageModel $pageModel): object|null
+    {
+        return NewsletterModel::findSentByIdOrAlias($identifier);
+    }
+
+    public function getAvailableParameters(PageModel $pageModel): array
+    {
+        return [
+            new UrlParameter('alias', $this->describeParameter('alias'), identifier: true),
+            new UrlParameter('id', $this->describeParameter('id'), requirement: '\d+', identifier: true),
+            new UrlParameter('subject', $this->describeParameter('subject')),
+            new UrlParameter('year', $this->describeParameter('year'), '\d{4}', null),
+            new UrlParameter('month', $this->describeParameter('month'), '\d{2}', null),
+            new UrlParameter('day', $this->describeParameter('day'), '\d{2}', null),
+        ];
+    }
+
     public function getParametersForContent(object $content, PageModel $pageModel): array
     {
         if (!$content instanceof NewsletterModel) {
-            throw new \InvalidArgumentException();
+            return [];
         }
 
         return [
@@ -55,22 +73,6 @@ class NewsletterUrlResolver implements ContentUrlResolverInterface
             'year' => date('Y', (int) $content->date),
             'month' => date('m', (int) $content->date),
             'day' => date('d', (int) $content->date),
-        ];
-    }
-
-    public function getAvailableParameters(string $contentType, PageModel $pageModel): array
-    {
-        if (NewsletterModel::class !== $contentType) {
-            return [];
-        }
-
-        return [
-            new UrlParameter('alias', $this->describeParameter('alias'), identifier: true),
-            new UrlParameter('id', $this->describeParameter('id'), requirement: '\d+', identifier: true),
-            new UrlParameter('subject', $this->describeParameter('subject')),
-            new UrlParameter('year', $this->describeParameter('year'), requirement: '\d{4}'),
-            new UrlParameter('month', $this->describeParameter('month'), requirement: '\d{2}'),
-            new UrlParameter('day', $this->describeParameter('day'), requirement: '\d{2}'),
         ];
     }
 

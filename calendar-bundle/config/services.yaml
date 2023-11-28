@@ -67,7 +67,7 @@ services:
         tags:
             - { name: contao.picker_provider, priority: 96 }
 
-    contao_calendar.routing.calendar_events_url_resolver:
-        class: Contao\CalendarBundle\Routing\CalendarEventsUrlResolver
+    contao_calendar.routing.calendar_events_resolver:
+        class: Contao\CalendarBundle\Routing\CalendarEventsResolver
         arguments:
             - '@translator'

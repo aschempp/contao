@@ -648,15 +648,24 @@ services:
             - '@router'
             - '@contao.routing.page_registry'
             - '@doctrine.orm.entity_manager'
+            - !tagged_iterator { tag: contao.content_url_resolver }
         public: true
 
+    contao.routing.content.article_resolver:
+        class: Contao\CoreBundle\Routing\Content\ArticleResolver
+        arguments:
+            - '@translator'
+
     contao.routing.content.page_resolver:
-        class: Contao\CoreBundle\Routing\Content\PageUrlResolver
+        class: Contao\CoreBundle\Routing\Content\PageResolver
         arguments:
             - '@contao.routing.page_registry'
 
-    contao.routing.content.article_resolver:
-        class: Contao\CoreBundle\Routing\Content\ArticleUrlResolver
+    contao.routing.content.string_resolver:
+        class: Contao\CoreBundle\Routing\Content\StringResolver
+        arguments:
+            - '@contao.insert_tag.parser'
+            - '@router.request_context'
 
     contao.routing.frontend_matcher:
         class: Contao\CoreBundle\Routing\Matcher\FrontendMatcher
@@ -668,6 +677,14 @@ services:
             - '%contao.image.target_dir%'
         tags:
             - routing.loader
+
+    contao.routing.content_enhancer:
+        class: Contao\CoreBundle\Routing\Enhancer\ContentEnhancer
+        arguments:
+            - '@contao.routing.page_registry'
+            - '@contao.routing.content_url_generator'
+        tags:
+            - contao.page_router_enhancer
 
     contao.routing.input_enhancer:
         class: Contao\CoreBundle\Routing\Enhancer\InputEnhancer
@@ -744,7 +761,7 @@ services:
         public: true
         arguments:
             - '@database_connection'
-            - [] # set by ContentUrlResolverPass
+            - !tagged_iterator contao.content_parameter_resolver
 
     contao.routing.page_router:
         class: Symfony\Cmf\Component\Routing\DynamicRouter

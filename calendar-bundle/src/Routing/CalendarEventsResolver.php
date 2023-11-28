@@ -14,6 +14,7 @@ namespace Contao\CalendarBundle\Routing;
 
 use Contao\ArticleModel;
 use Contao\CalendarEventsModel;
+use Contao\CoreBundle\Routing\Content\ContentParameterResolverInterface;
 use Contao\CoreBundle\Routing\Content\ContentUrlResolverInterface;
 use Contao\CoreBundle\Routing\Content\ContentUrlResult;
 use Contao\CoreBundle\Routing\Content\StringUrl;
@@ -22,21 +23,16 @@ use Contao\PageModel;
 use Contao\StringUtil;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class CalendarEventsUrlResolver implements ContentUrlResolverInterface
+class CalendarEventsResolver implements ContentUrlResolverInterface, ContentParameterResolverInterface
 {
     public function __construct(private readonly TranslatorInterface $translator)
     {
     }
 
-    public function supportsType(string $contentType): bool
-    {
-        return CalendarEventsModel::class === $contentType;
-    }
-
     public function resolve(object $content): ContentUrlResult
     {
         if (!$content instanceof CalendarEventsModel) {
-            throw new \InvalidArgumentException();
+            return ContentUrlResult::abstain();
         }
 
         switch ($content->source) {
@@ -67,10 +63,32 @@ class CalendarEventsUrlResolver implements ContentUrlResolverInterface
         return ContentUrlResult::create(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
+    public function getContentType(): string
+    {
+        return CalendarEventsModel::getTable();
+    }
+
+    public function loadContent(string $identifier, UrlParameter $urlParameter, PageModel $pageModel): object|null
+    {
+        return CalendarEventsModel::findPublishedByIdOrAlias($identifier);
+    }
+
+    public function getAvailableParameters(PageModel $pageModel): array
+    {
+        return [
+            new UrlParameter('alias', $this->describeParameter('alias'), identifier: true),
+            new UrlParameter('id', $this->describeParameter('id'), requirement: '\d+', identifier: true),
+            new UrlParameter('title', $this->describeParameter('title')),
+            new UrlParameter('year', $this->describeParameter('year'), requirement: '\d{4}'),
+            new UrlParameter('month', $this->describeParameter('month'), requirement: '\d{2}'),
+            new UrlParameter('day', $this->describeParameter('day'), requirement: '\d{2}'),
+        ];
+    }
+
     public function getParametersForContent(object $content, PageModel $pageModel): array
     {
         if (!$content instanceof CalendarEventsModel) {
-            throw new \InvalidArgumentException();
+            return [];
         }
 
         return [
@@ -81,22 +99,6 @@ class CalendarEventsUrlResolver implements ContentUrlResolverInterface
             'year' => date('Y', (int) $content->startTime),
             'month' => date('m', (int) $content->startTime),
             'day' => date('d', (int) $content->startTime),
-        ];
-    }
-
-    public function getAvailableParameters(string $contentType, PageModel $pageModel): array
-    {
-        if (CalendarEventsModel::class !== $contentType) {
-            return [];
-        }
-
-        return [
-            new UrlParameter('alias', $this->describeParameter('alias'), identifier: true),
-            new UrlParameter('id', $this->describeParameter('id'), requirement: '\d+', identifier: true),
-            new UrlParameter('title', $this->describeParameter('title')),
-            new UrlParameter('year', $this->describeParameter('year'), requirement: '\d{4}'),
-            new UrlParameter('month', $this->describeParameter('month'), requirement: '\d{2}'),
-            new UrlParameter('day', $this->describeParameter('day'), requirement: '\d{2}'),
         ];
     }
 

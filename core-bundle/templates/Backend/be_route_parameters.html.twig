@@ -3,32 +3,29 @@
     <h3>{{ 'tl_page.routeParameters.0'|trans }}</h3>
     <div class="tl_info">
         <p>{{ 'tl_page.routeParameters.1'|trans }}</p>
-        {% for type, values in parameters %}
-            <table class="tl_listing showColumns"{% if not loop.last %} style="margin-bottom: 10px"{% endif %}>
-                <tbody>
-                {% if loop.length > 1 %}
-                    <tr>
-                        <th class="tl_folder_tlist" colspan="5">{{ type }}</th>
-                    </tr>
-                {% endif %}
-                <tr>
-                    <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.name'|trans }}</th>
-                    <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.description'|trans }}</th>
-                    <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.requirement'|trans }}</th>
-                    <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.default'|trans }}</th>
-                    <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.identifier'|trans }}</th>
+        <table class="tl_listing showColumns">
+            <thead>
+            <tr>
+                <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.name'|trans }}</th>
+                <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.description'|trans }}</th>
+                <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.requirement'|trans }}</th>
+                <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.default'|trans }}</th>
+                <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.optional'|trans }}</th>
+                <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.identifier'|trans }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for parameter in parameters %}
+                <tr class="{{ loop.index % 2 ? 'even' : 'odd' }} hover-row">
+                    <td colspan="1" class="tl_file_list">{{ '{'~parameter.name~'}' }}</td>
+                    <td colspan="1" class="tl_file_list">{{ parameter.description }}</td>
+                    <td colspan="1" class="tl_file_list">{{ parameter.requirement|default('-') }}</td>
+                    <td colspan="1" class="tl_file_list">{{ parameter.default|default('-') }}</td>
+                    <td colspan="1" class="tl_file_list">{{ ('MSC.'~(parameter.default is same as null ? 'yes' : 'no'))|trans([], 'contao_default') }}</td>
+                    <td colspan="1" class="tl_file_list">{{ ('MSC.'~(parameter.identifier ? 'yes' : 'no'))|trans([], 'contao_default') }}</td>
                 </tr>
-                {% for parameter in values %}
-                    <tr class="{{ loop.index % 2 ? 'even' : 'odd' }} hover-row">
-                        <td colspan="1" class="tl_file_list">{{ '{'~parameter.name~'}' }}</td>
-                        <td colspan="1" class="tl_file_list">{{ parameter.description }}</td>
-                        <td colspan="1" class="tl_file_list">{{ parameter.requirement|default('-') }}</td>
-                        <td colspan="1" class="tl_file_list">{{ parameter.default|default('-') }}</td>
-                        <td colspan="1" class="tl_file_list">{{ ('MSC.'~(parameter.identifier ? 'yes' : 'no'))|trans([], 'contao_default') }}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>

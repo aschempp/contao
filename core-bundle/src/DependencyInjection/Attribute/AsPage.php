@@ -32,7 +32,6 @@ class AsPage
         string|null $locale = null,
         string|null $format = null,
         public bool $contentComposition = true,
-        public array $contentTypes = [],
         public string|null $urlSuffix = null,
     ) {
         if (null !== $locale) {

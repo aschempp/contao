@@ -12,9 +12,10 @@ declare(strict_types=1);
 
 namespace Contao\CoreBundle\Routing\Page;
 
-use Contao\CoreBundle\Routing\Content\ContentUrlResolverInterface;
+use Contao\CoreBundle\Routing\Content\ContentParameterResolverInterface;
 use Contao\CoreBundle\Routing\Content\UrlParameter;
 use Contao\PageModel;
+use Contao\StringUtil;
 use Doctrine\DBAL\Connection;
 use Symfony\Contracts\Service\ResetInterface;
 
@@ -41,20 +42,10 @@ class PageRegistry implements ResetInterface
      */
     private array $contentComposition = [];
 
-    /**
-     * @var array<string,ContentTypesInterface|array>
-     */
-    private array $contentTypes = [];
-
-    private array $contentResolvers = [];
-
-    /**
-     * @var array<string,array<ContentUrlResolverInterface>>
-     */
-    private array $resolverMap = [];
-
-    public function __construct(private readonly Connection $connection)
-    {
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly iterable $parameterResolvers,
+    ) {
     }
 
     /**
@@ -80,12 +71,19 @@ class PageRegistry implements ResetInterface
         } elseif (null === $path) {
             $path = '/'.($pageModel->alias ?: $pageModel->id);
 
-            if ($typedParameters = $this->getUrlParameters($pageModel)) {
-                foreach ($typedParameters as $parameters) {
-                    foreach ($parameters as $parameter) {
-                        if ($parameter->getRequirement()) {
-                            $requirements[$parameter->getName()] = $parameter->getRequirement();
-                        }
+            if ($parameters = $this->getUrlParameters($pageModel)) {
+                foreach ($parameters as $parameter) {
+                    // Only set parameters that exist in the path
+                    if (!preg_match('/\{!?'.$parameter->getName().'(\?)?/', $path, $matches)) {
+                        continue;
+                    }
+
+                    if ($parameter->getRequirement()) {
+                        $requirements[$parameter->getName()] = $parameter->getRequirement();
+                    }
+
+                    if (false !== $parameter->getDefault() && '?' !== ($matches[1] ?? null)) {
+                        $defaults[$parameter->getName()] = $parameter->getDefault();
                     }
                 }
             } elseif (!$this->isParameterless($pageModel)) {
@@ -141,33 +139,33 @@ class PageRegistry implements ResetInterface
         return (bool) $service;
     }
 
+    public function getContentTypes(): array
+    {
+        return array_unique(
+            array_merge(
+                array_map(
+                    static fn (ContentParameterResolverInterface $resolver) => $resolver->getContentType(),
+                    [...$this->parameterResolvers]
+                )
+            )
+        );
+    }
+
     /**
-     * @return array<string,array<string,UrlParameter>>
+     * @return array<string,UrlParameter>
      */
     public function getUrlParameters(PageModel $pageModel): array
     {
-        if (!isset($this->contentTypes[$pageModel->type])) {
-            return [];
-        }
-
-        $contentTypes = $this->contentTypes[$pageModel->type];
-
-        if ($contentTypes instanceof ContentTypesInterface) {
-            $contentTypes = $contentTypes->getSupportedContentTypes($pageModel);
-        }
-
         $parameters = [];
 
-        foreach ($contentTypes as $type) {
-            foreach ($this->getResolvers($type) as $resolver) {
-                foreach ($resolver->getAvailableParameters($type, $pageModel) as $parameter) {
-                    // Resolvers are sorted by priority, so make sure the first parameter wins
-                    if (isset($parameters[$type][$parameter->getName()])) {
-                        continue;
-                    }
-
-                    $parameters[$type][$parameter->getName()] = $parameter;
+        foreach ($this->getResolvers($pageModel) as $resolver) {
+            foreach ($resolver->getAvailableParameters($pageModel) as $parameter) {
+                // Resolvers are sorted by priority, this makes sure the first parameter wins
+                if (isset($parameters[$parameter->getName()])) {
+                    continue;
                 }
+
+                $parameters[$parameter->getName()] = $parameter;
             }
         }
 
@@ -184,19 +182,15 @@ class PageRegistry implements ResetInterface
     }
 
     /**
-     * @param array<ContentUrlResolverInterface> $contentResolvers
+     * @return array<ContentParameterResolverInterface>
      */
-    public function setContentUrlResolvers(array $contentResolvers): void
+    public function getParameterResolvers(PageModel|null $pageModel = null): array
     {
-        $this->contentResolvers = $contentResolvers;
-    }
+        if (null === $pageModel) {
+            return [...$this->parameterResolvers];
+        }
 
-    /**
-     * @return array<ContentUrlResolverInterface>
-     */
-    public function getUrlResolversForContent(object $content): array
-    {
-        return $this->getResolvers(\get_class($content));
+        return $this->getResolvers($pageModel);
     }
 
     /**
@@ -219,7 +213,7 @@ class PageRegistry implements ResetInterface
         return $this->urlSuffixes;
     }
 
-    public function add(string $type, RouteConfig $config, DynamicRouteInterface|UrlResolverInterface|null $routeEnhancer = null, ContentCompositionInterface|bool $contentComposition = true, ContentTypesInterface|array $contentTypes = []): self
+    public function add(string $type, RouteConfig $config, DynamicRouteInterface|UrlResolverInterface|null $routeEnhancer = null, ContentCompositionInterface|bool $contentComposition = true): self
     {
         // Override existing pages with the same identifier
         $this->routeConfigs[$type] = $config;
@@ -229,7 +223,6 @@ class PageRegistry implements ResetInterface
         }
 
         $this->contentComposition[$type] = $contentComposition;
-        $this->contentTypes[$type] = $contentTypes;
 
         // Make sure to reset caches when a page type is added
         $this->urlPrefixes = null;
@@ -292,7 +285,6 @@ class PageRegistry implements ResetInterface
     {
         $this->urlPrefixes = null;
         $this->urlSuffixes = null;
-        $this->resolverMap = [];
     }
 
     private function initializePrefixAndSuffix(): void
@@ -336,15 +328,17 @@ class PageRegistry implements ResetInterface
         return 'forward' === $pageModel->type && !$pageModel->alwaysForward;
     }
 
-    private function getResolvers(string $type): array
+    private function getResolvers(PageModel $pageModel): array
     {
-        if (isset($this->resolverMap[$type])) {
-            return $this->resolverMap[$type];
+        $contentType = StringUtil::decodeEntities((string) $pageModel->requireItem);
+
+        if (!$contentType || '1' === $contentType) {
+            return [];
         }
 
-        return $this->resolverMap[$type] = array_filter(
-            $this->contentResolvers,
-            static fn (ContentUrlResolverInterface $resolver) => $resolver->supportsType($type)
+        return array_filter(
+            [...$this->parameterResolvers],
+            static fn (ContentParameterResolverInterface $resolver) => $resolver->getContentType() === $contentType
         );
     }
 }

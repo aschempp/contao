@@ -27,7 +27,7 @@ abstract class ModuleNews extends Module
 	 *
 	 * @return array
 	 */
-	public static function sortOutProtected($arrArchives)
+	protected function sortOutProtected($arrArchives)
 	{
 		if (empty($arrArchives) || !\is_array($arrArchives))
 		{
