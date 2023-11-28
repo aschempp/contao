@@ -15,7 +15,6 @@ namespace Contao\CoreBundle\DependencyInjection\Compiler;
 use Contao\CoreBundle\Routing\Page\ContentCompositionInterface;
 use Contao\CoreBundle\Routing\Page\DynamicRouteInterface;
 use Contao\CoreBundle\Routing\Page\RouteConfig;
-use Contao\CoreBundle\Routing\Page\UrlResolverInterface;
 use Contao\FrontendIndex;
 use Psr\Container\ContainerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -69,7 +68,7 @@ class RegisterPagesPass implements CompilerPassInterface
                 $class = $definition->getClass();
                 $type = $this->getPageType($class, $attributes);
 
-                if (is_a($class, DynamicRouteInterface::class, true) || is_a($class, UrlResolverInterface::class, true)) {
+                if (is_a($class, DynamicRouteInterface::class, true)) {
                     $routeEnhancer = $reference;
                 }
 

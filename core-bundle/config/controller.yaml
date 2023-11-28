@@ -168,11 +168,6 @@ services:
         arguments:
             - '@contao.framework'
 
-    Contao\CoreBundle\Controller\Page\LogoutPageController:
-        arguments:
-            - '@security.logout_url_generator'
-            - '@request_stack'
-
     Contao\CoreBundle\Controller\Page\RootPageController:
         arguments:
             - '@contao.routing.content_url_generator'

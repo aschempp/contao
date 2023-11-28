@@ -33,13 +33,6 @@ class PageRegular extends Frontend
 	 */
 	protected $responseContext;
 
-	public function __construct(ResponseContext $responseContext = null)
-	{
-		parent::__construct();
-
-		$this->responseContext = $responseContext;
-	}
-
 	/**
 	 * Return a response object
 	 *
@@ -78,11 +71,7 @@ class PageRegular extends Frontend
 		$request = $container->get('request_stack')->getCurrentRequest();
 		$request->setLocale($locale);
 
-		if (!$this->responseContext)
-		{
-			$this->responseContext = $container->get('contao.routing.response_context_factory')->createContaoWebpageResponseContext($objPage);
-		}
-
+		$this->responseContext = $container->get('contao.routing.response_context_factory')->createContaoWebpageResponseContext($objPage);
 		$blnShowUnpublished = $container->get('contao.security.token_checker')->isPreviewMode();
 
 		System::loadLanguageFile('default');

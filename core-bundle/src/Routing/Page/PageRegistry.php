@@ -33,7 +33,7 @@ class PageRegistry implements ResetInterface
     private array $routeConfigs = [];
 
     /**
-     * @var array<string,DynamicRouteInterface|UrlResolverInterface>
+     * @var array<string,DynamicRouteInterface>
      */
     private array $routeEnhancers = [];
 
@@ -172,15 +172,6 @@ class PageRegistry implements ResetInterface
         return $parameters;
     }
 
-    public function getPageUrlResolver(PageModel $pageModel): UrlResolverInterface|null
-    {
-        if (($this->routeEnhancers[$pageModel->type] ?? null) instanceof UrlResolverInterface) {
-            return $this->routeEnhancers[$pageModel->type];
-        }
-
-        return null;
-    }
-
     /**
      * @return array<ContentParameterResolverInterface>
      */
@@ -213,7 +204,7 @@ class PageRegistry implements ResetInterface
         return $this->urlSuffixes;
     }
 
-    public function add(string $type, RouteConfig $config, DynamicRouteInterface|UrlResolverInterface|null $routeEnhancer = null, ContentCompositionInterface|bool $contentComposition = true): self
+    public function add(string $type, RouteConfig $config, DynamicRouteInterface|null $routeEnhancer = null, ContentCompositionInterface|bool $contentComposition = true): self
     {
         // Override existing pages with the same identifier
         $this->routeConfigs[$type] = $config;

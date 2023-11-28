@@ -21,6 +21,7 @@ use Contao\CoreBundle\InsertTag\InsertTagResult;
 use Contao\CoreBundle\InsertTag\OutputType;
 use Contao\CoreBundle\InsertTag\ResolvedInsertTag;
 use Contao\CoreBundle\Routing\ResponseContext\HtmlHeadBag\HtmlHeadBag;
+use Contao\CoreBundle\Util\UrlUtil;
 use Contao\Database;
 use Contao\Database\Result;
 use Contao\Date;
@@ -305,7 +306,11 @@ class LegacyInsertTag implements InsertTagResolverNestedResolvedInterface
 
                 try {
                     $blnAbsolute = \in_array('absolute', \array_slice($insertTag->getParameters()->all(), 1), true);
-                    $strUrl = $this->container->get('contao.routing.content_url_generator')->generate($objArticle, [], $blnAbsolute ? UrlGeneratorInterface::ABSOLUTE_URL : UrlGeneratorInterface::ABSOLUTE_PATH);
+                    $strUrl = $this->container->get('contao.routing.content_url_generator')->generate($objArticle);
+
+                    if (!$blnAbsolute) {
+                        $strUrl = UrlUtil::makeRelative($strUrl, Environment::get('base'));
+                    }
                 } catch (ExceptionInterface) {
                     // Ignore routing exception
                 }
