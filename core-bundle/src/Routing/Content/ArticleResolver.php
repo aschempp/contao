@@ -29,7 +29,7 @@ class ArticleResolver implements ContentUrlResolverInterface, ContentParameterRe
             return ContentUrlResult::abstain();
         }
 
-        return ContentUrlResult::create(PageModel::findWithDetails($content->pid));
+        return ContentUrlResult::resolve(PageModel::findWithDetails($content->pid));
     }
 
     public function getContentType(): string

@@ -38,14 +38,14 @@ class NewsResolver implements ContentUrlResolverInterface, ContentParameterResol
         switch ($content->source) {
             // Link to an external page
             case 'external':
-                return ContentUrlResult::create(new StringUrl($content->url));
+                return ContentUrlResult::redirect(new StringUrl($content->url));
 
             // Link to an internal page
             case 'internal':
                 $page = $content->getRelated('jumpTo');
 
                 if ($page instanceof PageModel) {
-                    return ContentUrlResult::create($page);
+                    return ContentUrlResult::redirect($page);
                 }
                 break;
 
@@ -54,13 +54,13 @@ class NewsResolver implements ContentUrlResolverInterface, ContentParameterResol
                 $article = ArticleModel::findByPk($content->articleId);
 
                 if ($article instanceof ArticleModel) {
-                    return ContentUrlResult::create($article);
+                    return ContentUrlResult::redirect($article);
                 }
                 break;
         }
 
         // Link to the default page
-        return ContentUrlResult::create(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
+        return ContentUrlResult::resolve(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
     public function getContentType(): string

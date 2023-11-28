@@ -37,6 +37,9 @@ class ContentUrlGenerator implements ResetInterface
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly PageRegistry $pageRegistry,
         private readonly EntityManagerInterface $entityManager,
+        /**
+         * @var iterable<ContentUrlResolverInterface> $urlResolvers
+         */
         private readonly iterable $urlResolvers,
     ) {
     }
@@ -44,7 +47,7 @@ class ContentUrlGenerator implements ResetInterface
     /**
      * @throws ExceptionInterface
      */
-    public function generate(object $content, array $query = []): string
+    public function generate(object $content, array $parameters = [], array $query = []): string
     {
         $cacheKey = spl_object_hash($content).'__'.serialize($query);
 
@@ -52,36 +55,44 @@ class ContentUrlGenerator implements ResetInterface
             return $this->urlCache[$cacheKey];
         }
 
-        [$target, $content] = $this->resolveContent($content) + [null, null];
+        [$target, $resolvedContent] = $this->resolveContent($content) + [null, null];
 
         if (\is_string($target)) {
             return $this->urlCache[$cacheKey] = $target;
         }
 
         if (!$target instanceof PageModel) {
-            $this->throwRouteNotFoundException($content);
+            $this->throwRouteNotFoundException($target);
         }
 
         $route = $this->pageRegistry->getRoute($target);
 
-        if ($content) {
-            $route->setContent($content);
-            $route->setRouteKey($this->getRouteKey($content));
+        if ($resolvedContent) {
+            $route->setContent($resolvedContent);
+            $route->setRouteKey($this->getRouteKey($resolvedContent));
+        }
+
+        // The original content has changed, parameters and query are not valid anymore
+        if ($resolvedContent !== $content) {
+            $parameters = [];
+            $query = [];
         }
 
         $compiledRoute = $route->compile();
-        $params = [];
 
-        if ($content) {
-            $params = array_merge(
-                ...array_map(
-                    static fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($content, $target),
-                    $this->pageRegistry->getParameterResolvers()
-                )
+        if ($resolvedContent) {
+            $parameters = array_replace(
+                array_replace(
+                    ...array_map(
+                        static fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($resolvedContent, $target),
+                        $this->pageRegistry->getParameterResolvers()
+                    ),
+                ),
+                $parameters,
             );
         }
 
-        $parameters = array_intersect_key($params, array_flip($compiledRoute->getVariables()));
+        $parameters = array_intersect_key($parameters, array_flip($compiledRoute->getVariables()));
 
         $url = $this->urlCache[$cacheKey] = $this->urlGenerator->generate(
             PageRoute::PAGE_BASED_ROUTE_NAME,
@@ -118,18 +129,19 @@ class ContentUrlGenerator implements ResetInterface
                 continue;
             }
 
+            if ($result->isRedirect()) {
+                return $this->resolveContent($result->content);
+            }
+
             if ($result->hasTargetUrl()) {
                 return [$result->getTargetUrl()];
             }
 
-            // Recursively run the loop until a PageModel is returned, and then run it again to resolve the PageModel
-            // which can possibly return a string URL. If the same result is returned as passed in, the route for that
-            // page should be generated.
-            if ($result->result instanceof PageModel && $result->result === $contents[0]) {
-                return $contents;
-            }
+            return $this->resolveContent($result->content, ...$contents);
+        }
 
-            return $this->resolveContent($result->result, ...$contents);
+        if ($contents[0] instanceof PageModel) {
+            return $contents;
         }
 
         $this->throwRouteNotFoundException($contents[0]);

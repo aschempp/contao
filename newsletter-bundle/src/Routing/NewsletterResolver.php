@@ -34,7 +34,7 @@ class NewsletterResolver implements ContentUrlResolverInterface, ContentParamete
             return ContentUrlResult::abstain();
         }
 
-        return ContentUrlResult::create(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
+        return ContentUrlResult::resolve(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
     public function getContentType(): string

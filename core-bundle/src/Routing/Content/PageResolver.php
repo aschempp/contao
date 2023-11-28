@@ -25,7 +25,7 @@ class PageResolver implements ContentUrlResolverInterface
 
         switch ($content->type) {
             case 'redirect':
-                return ContentUrlResult::create(new StringUrl($content->url));
+                return ContentUrlResult::redirect(new StringUrl($content->url));
 
             case 'forward':
                 if ($content->jumpTo) {
@@ -38,9 +38,9 @@ class PageResolver implements ContentUrlResolverInterface
                     throw new ForwardPageNotFoundException();
                 }
 
-                return ContentUrlResult::create($forwardPage);
+                return ContentUrlResult::redirect($forwardPage);
         }
 
-        return ContentUrlResult::create($content);
+        return ContentUrlResult::abstain();
     }
 }

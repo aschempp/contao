@@ -8,21 +8,28 @@ use Nyholm\Psr7\Uri;
 
 final class ContentUrlResult
 {
-    public function __construct(public readonly object|string|null $result)
+    private bool $redirect = false;
+
+    public function __construct(public readonly object|string|null $content)
     {
-        if (\is_string($result) && !(new Uri($result))->getScheme()) {
+        if (\is_string($content) && !(new Uri($content))->getScheme()) {
             throw new \InvalidArgumentException('ContentUrlResult must not be an relative URL.');
         }
     }
 
     public function isAbstained(): bool
     {
-        return null === $this->result;
+        return null === $this->content;
+    }
+
+    public function isRedirect(): bool
+    {
+        return $this->redirect;
     }
 
     public function hasTargetUrl(): bool
     {
-        return \is_string($this->result);
+        return \is_string($this->content);
     }
 
     public function getTargetUrl(): string
@@ -31,12 +38,7 @@ final class ContentUrlResult
             throw new \BadMethodCallException('ContentUrlResult does not have a target URL.');
         }
 
-        return $this->result;
-    }
-
-    public static function create(object|string|null $content): self
-    {
-        return new self($content);
+        return $this->content;
     }
 
     public static function abstain(): self
@@ -47,5 +49,18 @@ final class ContentUrlResult
     public static function absoluteUrl(string $url): self
     {
         return new self($url);
+    }
+
+    public static function redirect(object|null $content): self
+    {
+        $result = new self($content);
+        $result->redirect = true;
+
+        return $result;
+    }
+
+    public static function resolve(object|string|null $content): self
+    {
+        return new self($content);
     }
 }

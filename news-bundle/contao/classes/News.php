@@ -33,17 +33,17 @@ class News extends Frontend
 
 		try
 		{
-			$parameters = array();
+			$query = array();
 
 			// Add the current archive parameter (news archive)
 			if ($blnAddArchive && Input::get('month'))
 			{
-				$parameters['month'] = Input::get('month');
+				$query['month'] = Input::get('month');
 			}
 
 			$url = System::getContainer()
 				->get('contao.routing.content_url_generator')
-				->generate($objItem, $parameters)
+				->generate($objItem, [], $query)
 			;
 		}
 		catch (ExceptionInterface)
