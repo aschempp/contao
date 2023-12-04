@@ -43,4 +43,9 @@ class PageResolver implements ContentUrlResolverInterface
 
         return ContentUrlResult::abstain();
     }
+
+    public function getParametersForContent(object $content, PageModel $pageModel): array
+    {
+        return [];
+    }
 }

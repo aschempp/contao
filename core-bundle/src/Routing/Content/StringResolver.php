@@ -14,6 +14,7 @@ namespace Contao\CoreBundle\Routing\Content;
 
 use Contao\CoreBundle\InsertTag\InsertTagParser;
 use Contao\CoreBundle\Util\UrlUtil;
+use Contao\PageModel;
 use Symfony\Component\Routing\RequestContext;
 
 class StringResolver implements ContentUrlResolverInterface
@@ -34,5 +35,10 @@ class StringResolver implements ContentUrlResolverInterface
         $url = UrlUtil::makeAbsolute($url, $this->requestContext->getBaseUrl());
 
         return ContentUrlResult::absoluteUrl($url);
+    }
+
+    public function getParametersForContent(object $content, PageModel $pageModel): array
+    {
+        return [];
     }
 }

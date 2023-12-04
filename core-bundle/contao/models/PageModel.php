@@ -587,10 +587,19 @@ class PageModel extends Model
 			return null;
 		}
 
+		$pageRegistry = System::getContainer()->get('contao.routing.page_registry');
+
+		if (!$pageRegistry->isRoutable($pageModel))
+		{
+			return null;
+		}
+
 		$pageModel->loadDetails();
 
 		$t = static::$strTable;
-		$alias = '%' . self::stripPrefixesAndSuffixes($pageModel->alias, $pageModel->urlPrefix, $pageModel->urlSuffix) . '%';
+		$route = $pageRegistry->getRoute($pageModel);
+		$compiledRoute = $route->compile();
+		$alias = '%' . self::stripPrefixesAndSuffixes(ltrim($compiledRoute->getStaticPrefix(), '/'), $pageModel->urlPrefix, $pageModel->urlSuffix) . '%';
 
 		return static::findBy(array("$t.alias LIKE ?", "$t.id!=?"), array($alias, $pageModel->id));
 	}

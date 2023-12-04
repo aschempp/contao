@@ -173,6 +173,8 @@ class NewsModel extends Model
 {
 	use ModelMetadataTrait;
 
+	public const CONTENT_TYPE = 'news';
+
 	/**
 	 * Table name
 	 * @var string

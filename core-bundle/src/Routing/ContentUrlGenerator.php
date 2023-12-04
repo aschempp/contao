@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Contao\CoreBundle\Routing;
 
+use Contao\CoreBundle\Routing\Content\ContentParameterResolverInterface;
 use Contao\CoreBundle\Routing\Content\ContentUrlResolverInterface;
 use Contao\CoreBundle\Routing\Page\PageRegistry;
 use Contao\CoreBundle\Routing\Page\PageRoute;
@@ -47,15 +48,15 @@ class ContentUrlGenerator implements ResetInterface
     /**
      * @throws ExceptionInterface
      */
-    public function generate(object $content, array $parameters = [], array $query = []): string
+    public function generate(object $content, array $parameters = [], array $optionalParameters = []): string
     {
-        $cacheKey = spl_object_hash($content).'__'.serialize($query);
+        $cacheKey = spl_object_hash($content).'__'.serialize($parameters).'__'.serialize($optionalParameters);
 
         if (isset($this->urlCache[$cacheKey])) {
             return $this->urlCache[$cacheKey];
         }
 
-        [$target, $resolvedContent] = $this->resolveContent($content) + [null, null];
+        [$target, $targetContent] = $this->resolveContent($content) + [null, null];
 
         if (\is_string($target)) {
             return $this->urlCache[$cacheKey] = $target;
@@ -67,44 +68,37 @@ class ContentUrlGenerator implements ResetInterface
 
         $route = $this->pageRegistry->getRoute($target);
 
-        if ($resolvedContent) {
-            $route->setContent($resolvedContent);
-            $route->setRouteKey($this->getRouteKey($resolvedContent));
+        if ($targetContent) {
+            $route->setContent($targetContent);
+            $route->setRouteKey($this->getRouteKey($targetContent));
         }
 
-        // The original content has changed, parameters and query are not valid anymore
-        if ($resolvedContent !== $content) {
-            $parameters = [];
-            $query = [];
+        // The original content has changed, parameters are not valid anymore
+        if ($targetContent !== $content && $target !== $content) {
+            $parameters = $optionalParameters = [];
         }
 
         $compiledRoute = $route->compile();
 
-        if ($resolvedContent) {
-            $parameters = array_replace(
+        if ($targetContent) {
+            $optionalParameters = array_replace(
                 array_replace(
                     ...array_map(
-                        static fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($resolvedContent, $target),
-                        $this->pageRegistry->getParameterResolvers()
+                        static fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($targetContent, $target),
+                        [...$this->urlResolvers]
                     ),
                 ),
-                $parameters,
+                $optionalParameters,
             );
+
+            $optionalParameters = array_intersect_key($optionalParameters, array_flip($compiledRoute->getVariables()));
         }
 
-        $parameters = array_intersect_key($parameters, array_flip($compiledRoute->getVariables()));
-
-        $url = $this->urlCache[$cacheKey] = $this->urlGenerator->generate(
+        return $this->urlCache[$cacheKey] = $this->urlGenerator->generate(
             PageRoute::PAGE_BASED_ROUTE_NAME,
-            [...$parameters, RouteObjectInterface::ROUTE_OBJECT => $route],
+            [...$optionalParameters, ...$parameters, RouteObjectInterface::ROUTE_OBJECT => $route],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
-
-        if ([] !== $query) {
-            $url .= (str_contains($url, '?') ? '&' : '?').http_build_query($query);
-        }
-
-        return $url;
     }
 
     public function getContext(): RequestContext
@@ -129,12 +123,12 @@ class ContentUrlGenerator implements ResetInterface
                 continue;
             }
 
-            if ($result->isRedirect()) {
-                return $this->resolveContent($result->content);
-            }
-
             if ($result->hasTargetUrl()) {
                 return [$result->getTargetUrl()];
+            }
+
+            if ($result->isRedirect()) {
+                return $this->resolveContent($result->content);
             }
 
             return $this->resolveContent($result->content, ...$contents);

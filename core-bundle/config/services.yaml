@@ -648,13 +648,11 @@ services:
             - '@router'
             - '@contao.routing.page_registry'
             - '@doctrine.orm.entity_manager'
-            - !tagged_iterator { tag: contao.content_url_resolver }
+            - !tagged_iterator contao.content_url_resolver
         public: true
 
     contao.routing.content.article_resolver:
         class: Contao\CoreBundle\Routing\Content\ArticleResolver
-        arguments:
-            - '@translator'
 
     contao.routing.content.page_resolver:
         class: Contao\CoreBundle\Routing\Content\PageResolver
@@ -681,6 +679,7 @@ services:
         arguments:
             - '@contao.routing.page_registry'
             - '@contao.routing.content_url_generator'
+            - !tagged_iterator contao.content_url_resolver
         tags:
             - contao.page_router_enhancer
 

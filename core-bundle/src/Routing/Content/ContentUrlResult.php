@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Contao\CoreBundle\Routing\Content;
 
+use Contao\PageModel;
 use Nyholm\Psr7\Uri;
 
 final class ContentUrlResult
@@ -59,7 +60,7 @@ final class ContentUrlResult
         return $result;
     }
 
-    public static function resolve(object|string|null $content): self
+    public static function resolve(PageModel|null $content): self
     {
         return new self($content);
     }

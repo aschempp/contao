@@ -20,6 +20,7 @@ use Contao\CoreBundle\Routing\Page\PageRoute;
 use Contao\DataContainer;
 use Contao\PageModel;
 use Contao\StringUtil;
+use Symfony\Component\Routing\Route;
 use Twig\Environment;
 
 class PageRoutingListener
@@ -81,7 +82,7 @@ class PageRoutingListener
         }
 
         $conflicts = [];
-        $currentUrl = $this->buildUrl($currentPage->alias, $currentPage->urlPrefix, $currentPage->urlSuffix);
+        $currentUrl = $this->splitUrl($currentPage->alias, $currentPage->urlPrefix, $currentPage->urlSuffix);
         $backendAdapter = $this->framework->getAdapter(Backend::class);
 
         foreach ($aliasPages as $aliasPage) {
@@ -91,10 +92,28 @@ class PageRoutingListener
                 continue;
             }
 
-            $aliasUrl = $this->buildUrl($aliasPage->alias, $aliasPage->urlPrefix, $aliasPage->urlSuffix);
+            $aliasUrl = $this->splitUrl($aliasPage->alias, $aliasPage->urlPrefix, $aliasPage->urlSuffix);
 
-            if ($currentUrl !== $aliasUrl || !$this->pageRegistry->isRoutable($aliasPage)) {
-                continue;
+            if (count($aliasUrl) > count($currentUrl)) {
+                $long = $aliasUrl;
+                $short = $currentUrl;
+            } else {
+                $long = $currentUrl;
+                $short = $aliasUrl;
+            }
+
+            foreach ($long as $k => $v) {
+                if (!isset($short[$k]) && !preg_match('/\?[^}]*}/', $v)) {
+                    continue 2;
+                }
+
+                if (str_contains($v, '{')) {
+                    continue;
+                }
+
+                if ($v !== ($short[$k] ?? null)) {
+                    continue 2;
+                }
             }
 
             $conflicts[] = [
@@ -114,11 +133,11 @@ class PageRoutingListener
     }
 
     /**
-     * Builds the URL from prefix, alias and suffix. We cannot use the router for
-     * this, since pages might have non-optional parameters. This value is only used to
-     * compare two pages and see if they _might_ conflict based on the alias itself.
+     * Builds the URL from prefix, alias and suffix and returns parts.
+     * We cannot use the router for this, since pages might have non-optional parameters.
+     * This value is only used to compare two pages and see if they _might_ conflict based on the alias itself.
      */
-    private function buildUrl(string $alias, string $urlPrefix, string $urlSuffix): string
+    private function splitUrl(string $alias, string $urlPrefix, string $urlSuffix): array
     {
         $url = '/'.$alias.$urlSuffix;
 
@@ -126,7 +145,7 @@ class PageRoutingListener
             $url = '/'.$urlPrefix.$url;
         }
 
-        return $url;
+        return explode('/', trim($url, '/'));
     }
 
     private function getPathWithParameters(PageRoute $route): string

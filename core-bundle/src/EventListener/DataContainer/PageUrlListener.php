@@ -72,7 +72,7 @@ class PageUrlListener
                 throw new \RuntimeException($this->translator->trans('ERR.aliasNumeric', [], 'contao_default'));
             }
 
-            if (str_contains($value, '{')) {
+            if ($parameters) {
                 $this->validateParameters($value, $parameters, $pageModel);
             }
 
@@ -354,6 +354,14 @@ class PageUrlListener
                 }
 
                 $hasIdentifier = true;
+            }
+        }
+
+        if (!$hasIdentifier) {
+            foreach ($parameters as $parameter) {
+                if ($parameter->isIdentifier()) {
+                    throw new \RuntimeException('Must add at least one identifier parameter.');
+                }
             }
         }
     }

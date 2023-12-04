@@ -37,28 +37,6 @@ class NewsletterResolver implements ContentUrlResolverInterface, ContentParamete
         return ContentUrlResult::resolve(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
-    public function getContentType(): string
-    {
-        return NewsletterModel::getTable();
-    }
-
-    public function loadContent(string $identifier, UrlParameter $urlParameter, PageModel $pageModel): object|null
-    {
-        return NewsletterModel::findSentByIdOrAlias($identifier);
-    }
-
-    public function getAvailableParameters(PageModel $pageModel): array
-    {
-        return [
-            new UrlParameter('alias', $this->describeParameter('alias'), identifier: true),
-            new UrlParameter('id', $this->describeParameter('id'), requirement: '\d+', identifier: true),
-            new UrlParameter('subject', $this->describeParameter('subject')),
-            new UrlParameter('year', $this->describeParameter('year'), '\d{4}', null),
-            new UrlParameter('month', $this->describeParameter('month'), '\d{2}', null),
-            new UrlParameter('day', $this->describeParameter('day'), '\d{2}', null),
-        ];
-    }
-
     public function getParametersForContent(object $content, PageModel $pageModel): array
     {
         if (!$content instanceof NewsletterModel) {
@@ -73,6 +51,32 @@ class NewsletterResolver implements ContentUrlResolverInterface, ContentParamete
             'year' => date('Y', (int) $content->date),
             'month' => date('m', (int) $content->date),
             'day' => date('d', (int) $content->date),
+        ];
+    }
+
+    public function getSupportedContent(): string
+    {
+        return NewsletterModel::CONTENT_TYPE;
+    }
+
+    public function loadContent(string $identifier, UrlParameter $urlParameter, PageModel $pageModel): object|null
+    {
+        if (!\in_array($urlParameter->getName(), ['id', 'alias'])) {
+            return null;
+        }
+
+        return NewsletterModel::findSentByIdOrAlias($identifier);
+    }
+
+    public function getAvailableParameters(PageModel $pageModel): array
+    {
+        return [
+            new UrlParameter('alias', $this->describeParameter('alias'), identifier: true),
+            new UrlParameter('id', $this->describeParameter('id'), requirement: '\d+', identifier: true),
+            new UrlParameter('subject', $this->describeParameter('subject')),
+            new UrlParameter('year', $this->describeParameter('year'), '\d{4}', null),
+            new UrlParameter('month', $this->describeParameter('month'), '\d{2}', null),
+            new UrlParameter('day', $this->describeParameter('day'), '\d{2}', null),
         ];
     }
 

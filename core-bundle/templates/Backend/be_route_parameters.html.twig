@@ -10,7 +10,6 @@
                 <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.description'|trans }}</th>
                 <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.requirement'|trans }}</th>
                 <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.default'|trans }}</th>
-                <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.optional'|trans }}</th>
                 <th class="tl_folder_tlist">{{ 'tl_page.routeParameters.identifier'|trans }}</th>
             </tr>
             </thead>
@@ -21,7 +20,6 @@
                     <td colspan="1" class="tl_file_list">{{ parameter.description }}</td>
                     <td colspan="1" class="tl_file_list">{{ parameter.requirement|default('-') }}</td>
                     <td colspan="1" class="tl_file_list">{{ parameter.default|default('-') }}</td>
-                    <td colspan="1" class="tl_file_list">{{ ('MSC.'~(parameter.default is same as null ? 'yes' : 'no'))|trans([], 'contao_default') }}</td>
                     <td colspan="1" class="tl_file_list">{{ ('MSC.'~(parameter.identifier ? 'yes' : 'no'))|trans([], 'contao_default') }}</td>
                 </tr>
             {% endfor %}

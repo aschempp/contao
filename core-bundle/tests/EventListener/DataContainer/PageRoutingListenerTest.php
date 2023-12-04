@@ -207,13 +207,6 @@ class PageRoutingListenerTest extends TestCase
         $pageRegistry = $this->createMock(PageRegistry::class);
         $pageRegistry
             ->expects($this->exactly(3))
-            ->method('isRoutable')
-            ->withConsecutive(...array_map(static fn ($page) => [$page], $aliasPages))
-            ->willReturn(true)
-        ;
-
-        $pageRegistry
-            ->expects($this->exactly(3))
             ->method('getRoute')
             ->withConsecutive(...array_map(static fn ($page) => [$page], $aliasPages))
             ->willReturn(...$aliasRoutes)
@@ -324,76 +317,6 @@ class PageRoutingListenerTest extends TestCase
         ;
 
         $dc = $this->mockClassWithProperties(DataContainer::class, ['id' => 42]);
-        $listener = new PageRoutingListener($framework, $pageRegistry, $twig);
-
-        $this->assertSame('', $listener->generateRouteConflicts($dc));
-    }
-
-    public function testSkipsSimilarPageIfItIsNotRoutable(): void
-    {
-        $pageModel = $this->mockClassWithProperties(PageModel::class, [
-            'id' => 1,
-            'alias' => 'foobar',
-            'urlPrefix' => '',
-            'urlSuffix' => '',
-            'domain' => '',
-        ]);
-
-        $aliasPage = $this->mockClassWithProperties(PageModel::class, [
-            'id' => 2,
-            'alias' => 'foobar',
-            'urlPrefix' => '',
-            'urlSuffix' => '',
-            'domain' => '',
-        ]);
-
-        $pageAdapter = $this->mockAdapter(['findWithDetails', 'findSimilarByAlias']);
-        $pageAdapter
-            ->expects($this->once())
-            ->method('findWithDetails')
-            ->with(1)
-            ->willReturn($pageModel)
-        ;
-
-        $pageAdapter
-            ->expects($this->once())
-            ->method('findSimilarByAlias')
-            ->with($pageModel)
-            ->willReturn([$aliasPage])
-        ;
-
-        $backendAdapter = $this->mockAdapter(['addToUrl']);
-        $backendAdapter
-            ->expects($this->never())
-            ->method('addToUrl')
-        ;
-
-        $framework = $this->mockContaoFramework([
-            PageModel::class => $pageAdapter,
-            Backend::class => $backendAdapter,
-        ]);
-
-        $pageRegistry = $this->createMock(PageRegistry::class);
-        $pageRegistry
-            ->expects($this->once())
-            ->method('isRoutable')
-            ->with($aliasPage)
-            ->willReturn(false)
-        ;
-
-        $pageRegistry
-            ->expects($this->never())
-            ->method('getRoute')
-        ;
-
-        $dc = $this->mockClassWithProperties(DataContainer::class, ['id' => 1]);
-
-        $twig = $this->createMock(Environment::class);
-        $twig
-            ->expects($this->never())
-            ->method('render')
-        ;
-
         $listener = new PageRoutingListener($framework, $pageRegistry, $twig);
 
         $this->assertSame('', $listener->generateRouteConflicts($dc));

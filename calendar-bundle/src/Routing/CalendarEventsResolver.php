@@ -63,28 +63,6 @@ class CalendarEventsResolver implements ContentUrlResolverInterface, ContentPara
         return ContentUrlResult::resolve(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
-    public function getContentType(): string
-    {
-        return CalendarEventsModel::getTable();
-    }
-
-    public function loadContent(string $identifier, UrlParameter $urlParameter, PageModel $pageModel): object|null
-    {
-        return CalendarEventsModel::findPublishedByIdOrAlias($identifier);
-    }
-
-    public function getAvailableParameters(PageModel $pageModel): array
-    {
-        return [
-            new UrlParameter('alias', $this->describeParameter('alias'), identifier: true),
-            new UrlParameter('id', $this->describeParameter('id'), requirement: '\d+', identifier: true),
-            new UrlParameter('title', $this->describeParameter('title')),
-            new UrlParameter('year', $this->describeParameter('year'), requirement: '\d{4}'),
-            new UrlParameter('month', $this->describeParameter('month'), requirement: '\d{2}'),
-            new UrlParameter('day', $this->describeParameter('day'), requirement: '\d{2}'),
-        ];
-    }
-
     public function getParametersForContent(object $content, PageModel $pageModel): array
     {
         if (!$content instanceof CalendarEventsModel) {
@@ -99,6 +77,32 @@ class CalendarEventsResolver implements ContentUrlResolverInterface, ContentPara
             'year' => date('Y', (int) $content->startTime),
             'month' => date('m', (int) $content->startTime),
             'day' => date('d', (int) $content->startTime),
+        ];
+    }
+
+    public function getSupportedContent(): string
+    {
+        return CalendarEventsModel::CONTENT_TYPE;
+    }
+
+    public function loadContent(string $identifier, UrlParameter $urlParameter, PageModel $pageModel): object|null
+    {
+        if (!\in_array($urlParameter->getName(), ['id', 'alias'])) {
+            return null;
+        }
+
+        return CalendarEventsModel::findPublishedByIdOrAlias($identifier);
+    }
+
+    public function getAvailableParameters(PageModel $pageModel): array
+    {
+        return [
+            new UrlParameter('alias', $this->describeParameter('alias'), identifier: true),
+            new UrlParameter('id', $this->describeParameter('id'), requirement: '\d+', identifier: true),
+            new UrlParameter('title', $this->describeParameter('title')),
+            new UrlParameter('year', $this->describeParameter('year'), requirement: '\d{4}'),
+            new UrlParameter('month', $this->describeParameter('month'), requirement: '\d{2}'),
+            new UrlParameter('day', $this->describeParameter('day'), requirement: '\d{2}'),
         ];
     }
 

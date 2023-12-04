@@ -222,7 +222,7 @@ $GLOBALS['TL_DCA']['tl_page'] = array
 		(
 			'search'                  => true,
 			'inputType'               => 'text',
-			'eval'                    => array('doNotCopy'=>true, 'maxlength'=>255, 'tl_class'=>'w50'),
+			'eval'                    => array('doNotCopy'=>true, 'useRawRequestData' => true, 'maxlength'=>255, 'tl_class'=>'w50'),
 			'sql'                     => "varchar(255) BINARY NOT NULL default ''"
 		),
 		'requireItem' => array

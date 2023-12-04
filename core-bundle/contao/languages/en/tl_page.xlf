@@ -35,12 +35,6 @@
       <trans-unit id="tl_page.requiredItems.1.1">
         <source>Trigger a 404 error if the page URL does not contain an auto_item alias.</source>
       </trans-unit>
-      <trans-unit id="tl_page.requiredItems.tl_article.0">
-        <source>Article</source>
-      </trans-unit>
-      <trans-unit id="tl_page.requiredItems.tl_article.1">
-        <source>Details of a page article.</source>
-      </trans-unit>
       <trans-unit id="tl_page.routePath.0">
         <source>Route path</source>
       </trans-unit>
@@ -517,9 +511,6 @@
       </trans-unit>
       <trans-unit id="tl_page.routeParameters.default">
         <source>Default</source>
-      </trans-unit>
-      <trans-unit id="tl_page.routeParameters.optional">
-        <source>Optional</source>
       </trans-unit>
       <trans-unit id="tl_page.routeParameters.identifier">
         <source>Identifier</source>

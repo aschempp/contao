@@ -94,6 +94,8 @@ use Contao\Model\Collection;
  */
 class NewsletterModel extends Model
 {
+	public const CONTENT_TYPE = 'newsletter';
+
 	/**
 	 * Table name
 	 * @var string

@@ -205,6 +205,8 @@ class CalendarEventsModel extends Model
 {
 	use ModelMetadataTrait;
 
+	public const CONTENT_TYPE = 'calendar_events';
+
 	/**
 	 * Table name
 	 * @var string

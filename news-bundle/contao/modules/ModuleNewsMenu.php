@@ -31,16 +31,25 @@ class ModuleNewsMenu extends ModuleNews
 	protected $Date;
 
 	/**
-	 * Current URL
+	 * Target URL for legacy templates
 	 * @var string
 	 */
 	protected $strUrl;
+
+	/**
+	 * Target page for URL parameters
+	 */
+	protected PageModel $objTarget;
 
 	/**
 	 * Template
 	 * @var string
 	 */
 	protected $strTemplate = 'mod_newsmenu';
+
+	private string|null $year;
+	private string|null $month;
+	private string|null $day;
 
 	/**
 	 * Display a wildcard in the back end
@@ -72,9 +81,12 @@ class ModuleNewsMenu extends ModuleNews
 		}
 
 		$this->strUrl = preg_replace('/\?.*$/', '', Environment::get('requestUri'));
+		$this->objTarget = $GLOBALS['objPage'];
 
 		if (($objTarget = $this->objModel->getRelated('jumpTo')) instanceof PageModel)
 		{
+			$this->objTarget = $objTarget;
+
 			try
 			{
 				/** @var PageModel $objTarget */
@@ -84,6 +96,23 @@ class ModuleNewsMenu extends ModuleNews
 			{
 				// keep the current request URI
 			}
+		}
+
+		$this->year = $request->attributes->get('year') ?? Input::get('year');
+		$this->month = $request->attributes->get('month') ?? Input::get('month');
+		$this->day = $request->attributes->get('day') ?? Input::get('day');
+
+		// Handling legacy template where month included year etc.
+		if (!$this->year && !$this->month && strlen($this->day) === 8)
+		{
+			$this->year = substr($this->day, 0, 4);
+			$this->month = substr($this->day, 4, 2);
+			$this->day = substr($this->day, 6);
+		}
+		elseif (!$this->year && strlen($this->month) === 6)
+		{
+			$this->year = substr($this->month, 0, 4);
+			$this->month = substr($this->month, 4);
 		}
 
 		return parent::generate();
@@ -184,27 +213,36 @@ class ModuleNewsMenu extends ModuleNews
 		($this->news_order == 'order_date_asc') ? ksort($arrData) : krsort($arrData);
 
 		$arrItems = array();
+		$arrYears = array();
+
+		$objRouter = System::getContainer()->get('contao.routing.content_url_generator');
 
 		// Prepare the navigation
 		foreach ($arrData as $intYear=>$arrMonth)
 		{
-			foreach ($arrMonth as $intMonth=>$intCount)
-			{
-				$intDate = $intYear . $intMonth;
-				$intMonth = (int) $intMonth - 1;
+			$arrYears[$intYear]['date'] = $intYear;
+			$arrYears[$intYear]['link'] = $intYear;
+			$arrYears[$intYear]['href'] = $objRouter->generate($this->objTarget, ['year' => $intYear]);
+			$arrYears[$intYear]['title'] = StringUtil::specialchars($intYear . ' (' . array_sum($arrMonth) . ')');
+			$arrYears[$intYear]['isActive'] = !$this->month ? $this->year == $intYear : false;
+			$arrYears[$intYear]['quantity'] = array_sum($arrMonth);
 
+			foreach ($arrMonth as $strMonth=>$intCount)
+			{
+				$intMonth = (int) $strMonth - 1;
 				$quantity = sprintf(($intCount < 2) ? $GLOBALS['TL_LANG']['MSC']['entry'] : $GLOBALS['TL_LANG']['MSC']['entries'], $intCount);
 
-				$arrItems[$intYear][$intMonth]['date'] = $intDate;
+				$arrItems[$intYear][$intMonth]['date'] = $intYear . $strMonth;
 				$arrItems[$intYear][$intMonth]['link'] = $GLOBALS['TL_LANG']['MONTHS'][$intMonth] . ' ' . $intYear;
-				$arrItems[$intYear][$intMonth]['href'] = $this->strUrl . '?month=' . $intDate;
+				$arrItems[$intYear][$intMonth]['href'] = $objRouter->generate($this->objTarget, ['year' => $intYear, 'month' => $strMonth]);
 				$arrItems[$intYear][$intMonth]['title'] = StringUtil::specialchars($GLOBALS['TL_LANG']['MONTHS'][$intMonth] . ' ' . $intYear . ' (' . $quantity . ')');
-				$arrItems[$intYear][$intMonth]['isActive'] = Input::get('month') == $intDate;
+				$arrItems[$intYear][$intMonth]['isActive'] = $this->year == $intYear && $this->month == $strMonth;
 				$arrItems[$intYear][$intMonth]['quantity'] = $quantity;
 			}
 		}
 
 		$this->Template->items = $arrItems;
+		$this->Template->years = $arrYears;
 		$this->Template->showQuantity = $this->news_showQuantity;
 		$this->Template->url = $this->strUrl . '?';
 		$this->Template->activeYear = Input::get('year');

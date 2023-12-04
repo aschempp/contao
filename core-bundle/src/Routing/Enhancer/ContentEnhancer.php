@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace Contao\CoreBundle\Routing\Enhancer;
 
 use Contao\CoreBundle\Exception\ContentNotFoundException;
-use Contao\CoreBundle\Routing\Content\ContentParameterResolverInterface;
+use Contao\CoreBundle\Routing\Content\ContentUrlResolverInterface;
 use Contao\CoreBundle\Routing\Content\UrlParameter;
 use Contao\CoreBundle\Routing\ContentUrlGenerator;
 use Contao\CoreBundle\Routing\Page\PageRegistry;
@@ -30,6 +30,8 @@ class ContentEnhancer implements RouteEnhancerInterface
     public function __construct(
         private readonly PageRegistry $pageRegistry,
         private readonly ContentUrlGenerator $urlGenerator,
+        /** @var iterable<ContentUrlResolverInterface> $urlResolvers */
+        private readonly iterable $urlResolvers
     ) {
     }
 
@@ -87,8 +89,8 @@ class ContentEnhancer implements RouteEnhancerInterface
     {
         $params = array_merge(
             ...array_map(
-                static fn (ContentParameterResolverInterface $resolver) => $resolver->getParametersForContent($content, $pageModel),
-                $this->pageRegistry->getParameterResolvers($pageModel)
+                static fn (ContentUrlResolverInterface $resolver) => $resolver->getParametersForContent($content, $pageModel),
+                [...$this->urlResolvers]
             )
         );
 

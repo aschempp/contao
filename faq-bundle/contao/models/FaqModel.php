@@ -129,6 +129,8 @@ class FaqModel extends Model
 {
 	use ModelMetadataTrait;
 
+	public const CONTENT_TYPE = 'faq';
+
 	/**
 	 * Table name
 	 * @var string

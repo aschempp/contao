@@ -71,18 +71,18 @@ class PageRegistry implements ResetInterface
         } elseif (null === $path) {
             $path = '/'.($pageModel->alias ?: $pageModel->id);
 
-            if ($parameters = $this->getUrlParameters($pageModel)) {
-                foreach ($parameters as $parameter) {
+            if (str_contains($path, '{')) {
+                foreach ($this->getUrlParameters($pageModel) as $parameter) {
                     // Only set parameters that exist in the path
-                    if (!preg_match('/\{!?'.$parameter->getName().'(\?)?/', $path, $matches)) {
+                    if (!preg_match('/\{!?'.$parameter->getName().'(<[^>]+>)?(\?)?/', $path, $matches)) {
                         continue;
                     }
 
-                    if ($parameter->getRequirement()) {
+                    if (!($matches[1] ?? null) && $parameter->getRequirement()) {
                         $requirements[$parameter->getName()] = $parameter->getRequirement();
                     }
 
-                    if (false !== $parameter->getDefault() && '?' !== ($matches[1] ?? null)) {
+                    if (false !== $parameter->getDefault() && '?' !== ($matches[2] ?? null)) {
                         $defaults[$parameter->getName()] = $parameter->getDefault();
                     }
                 }
@@ -144,7 +144,7 @@ class PageRegistry implements ResetInterface
         return array_unique(
             array_merge(
                 array_map(
-                    static fn (ContentParameterResolverInterface $resolver) => $resolver->getContentType(),
+                    static fn (ContentParameterResolverInterface $resolver) => $resolver->getSupportedContent(),
                     [...$this->parameterResolvers]
                 )
             )
@@ -321,7 +321,7 @@ class PageRegistry implements ResetInterface
 
     private function getResolvers(PageModel $pageModel): array
     {
-        $contentType = StringUtil::decodeEntities((string) $pageModel->requireItem);
+        $contentType = $pageModel->requireItem;
 
         if (!$contentType || '1' === $contentType) {
             return [];
@@ -329,7 +329,7 @@ class PageRegistry implements ResetInterface
 
         return array_filter(
             [...$this->parameterResolvers],
-            static fn (ContentParameterResolverInterface $resolver) => $resolver->getContentType() === $contentType
+            static fn (ContentParameterResolverInterface $resolver) => $resolver->getSupportedContent() === $contentType
         );
     }
 }

@@ -36,25 +36,6 @@ class FaqResolver implements ContentUrlResolverInterface, ContentParameterResolv
         return ContentUrlResult::resolve(PageModel::findWithDetails((int) $content->getRelated('pid')?->jumpTo));
     }
 
-    public function getContentType(): string
-    {
-        return FaqModel::getTable();
-    }
-
-    public function loadContent(string $identifier, UrlParameter $urlParameter, PageModel $pageModel): object|null
-    {
-        return FaqModel::findPublishedByIdOrAlias($identifier);
-    }
-
-    public function getAvailableParameters(PageModel $pageModel): array
-    {
-        return [
-            new UrlParameter('alias', $this->describeParameter('alias'), identifier: true),
-            new UrlParameter('id', $this->describeParameter('id'), requirement: '\d+', identifier: true),
-            new UrlParameter('question', $this->describeParameter('question')),
-        ];
-    }
-
     public function getParametersForContent(object $content, PageModel $pageModel): array
     {
         if (!$content instanceof FaqModel) {
@@ -66,6 +47,29 @@ class FaqResolver implements ContentUrlResolverInterface, ContentParameterResolv
             'alias' => ($content->alias ?: $content->id),
             'id' => (int) $content->id,
             'question' => StringUtil::standardize($content->question),
+        ];
+    }
+
+    public function getSupportedContent(): string
+    {
+        return FaqModel::CONTENT_TYPE;
+    }
+
+    public function loadContent(string $identifier, UrlParameter $urlParameter, PageModel $pageModel): object|null
+    {
+        if (!\in_array($urlParameter->getName(), ['id', 'alias'])) {
+            return null;
+        }
+
+        return FaqModel::findPublishedByIdOrAlias($identifier);
+    }
+
+    public function getAvailableParameters(PageModel $pageModel): array
+    {
+        return [
+            new UrlParameter('alias', $this->describeParameter('alias'), identifier: true),
+            new UrlParameter('id', $this->describeParameter('id'), requirement: '\d+', identifier: true),
+            new UrlParameter('question', $this->describeParameter('question')),
         ];
     }
 

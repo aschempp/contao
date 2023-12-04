@@ -29,6 +29,10 @@ class ModuleNewsArchive extends ModuleNews
 	 */
 	protected $strTemplate = 'mod_newsarchive';
 
+	private string|null $year;
+	private string|null $month;
+	private string|null $day;
+
 	/**
 	 * Display a wildcard in the back end
 	 *
@@ -64,10 +68,27 @@ class ModuleNewsArchive extends ModuleNews
 			return $this->getFrontendModule($this->news_readerModule, $this->strColumn);
 		}
 
+		$this->year = $request->attributes->get('year') ?? Input::get('year');
+		$this->month = $request->attributes->get('month') ?? Input::get('month');
+		$this->day = $request->attributes->get('day') ?? Input::get('day');
+
 		// Hide the module if no period has been selected
-		if ($this->news_jumpToCurrent == 'hide_module' && Input::get('year') === null && Input::get('month') === null && Input::get('day') === null)
+		if ($this->news_jumpToCurrent == 'hide_module' && $this->year === null && $this->month === null && $this->day === null)
 		{
 			return '';
+		}
+
+		// Handling legacy template where month included year etc.
+		if (!$this->year && !$this->month && strlen($this->day) === 8)
+		{
+			$this->year = substr($this->day, 0, 4);
+			$this->month = substr($this->day, 4, 2);
+			$this->day = substr($this->day, 6);
+		}
+		elseif (!$this->year && strlen($this->month) === 6)
+		{
+			$this->year = substr($this->month, 0, 4);
+			$this->month = substr($this->month, 4);
 		}
 
 		// Tag the news archives (see #2137)
@@ -93,56 +114,49 @@ class ModuleNewsArchive extends ModuleNews
 		$intBegin = 0;
 		$intEnd = 0;
 
-		$intYear = (int) Input::get('year');
-		$intMonth = (int) Input::get('month');
-		$intDay = (int) Input::get('day');
-
 		// Jump to the current period
-		if (Input::get('year') === null && Input::get('month') === null && Input::get('day') === null && $this->news_jumpToCurrent != 'all_items')
+		if ($this->year === null && $this->month === null && $this->day === null && $this->news_jumpToCurrent != 'all_items')
 		{
 			switch ($this->news_format)
 			{
-				case 'news_year':
-					$intYear = date('Y');
-					break;
+				case 'news_day':
+					$this->day = date('d');
+					//break;
 
 				default:
 				case 'news_month':
-					$intMonth = date('Ym');
-					break;
+					$this->month = date('m');
+					//break;
 
-				case 'news_day':
-					$intDay = date('Ymd');
-					break;
+				case 'news_year':
+					$this->year = date('Y');
+					//break;
 			}
 		}
 
 		// Create the date object
 		try
 		{
-			if ($intYear)
+			if ($this->year && $this->month && $this->day)
 			{
-				$strDate = $intYear;
-				$objDate = new Date($strDate, 'Y');
-				$intBegin = $objDate->yearBegin;
-				$intEnd = $objDate->yearEnd;
-				$this->headline .= ' ' . date('Y', $objDate->tstamp);
+				$objDate = new Date($this->year.$this->month.$this->day, 'Ymd');
+				$intBegin = $objDate->dayBegin;
+				$intEnd = $objDate->dayEnd;
+				$this->headline .= ' ' . Date::parse($objPage->dateFormat, $objDate->tstamp);
 			}
-			elseif ($intMonth)
+			elseif ($this->year && $this->month)
 			{
-				$strDate = $intMonth;
-				$objDate = new Date($strDate, 'Ym');
+				$objDate = new Date($this->year.$this->month, 'Ym');
 				$intBegin = $objDate->monthBegin;
 				$intEnd = $objDate->monthEnd;
 				$this->headline .= ' ' . Date::parse('F Y', $objDate->tstamp);
 			}
-			elseif ($intDay)
+			elseif ($this->year)
 			{
-				$strDate = $intDay;
-				$objDate = new Date($strDate, 'Ymd');
-				$intBegin = $objDate->dayBegin;
-				$intEnd = $objDate->dayEnd;
-				$this->headline .= ' ' . Date::parse($objPage->dateFormat, $objDate->tstamp);
+				$objDate = new Date($this->year, 'Y');
+				$intBegin = $objDate->yearBegin;
+				$intEnd = $objDate->yearEnd;
+				$this->headline .= ' ' . date('Y', $objDate->tstamp);
 			}
 			elseif ($this->news_jumpToCurrent == 'all_items')
 			{
