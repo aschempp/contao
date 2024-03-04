@@ -1015,7 +1015,7 @@ class tl_page extends Backend
 
 				// Check the type of the first page (not the following parent pages)
 				// In "edit multiple" mode, $ids contains only the parent ID, therefore check $id != $_GET['pid'] (see #5620)
-				if ($i == 0 && $id != Input::get('pid') && Input::get('act') != 'create' && !$security->isGranted(ContaoCorePermissions::USER_CAN_ACCESS_PAGE_TYPE, $objPage->type))
+				if ($i == 0 && $id != Input::get('pid') && Input::get('act') != 'create' && Input::get('act') != 'show' && !$security->isGranted(ContaoCorePermissions::USER_CAN_ACCESS_PAGE_TYPE, $objPage->type))
 				{
 					System::getContainer()->get('monolog.logger.contao.error')->error('Not enough permissions to  ' . Input::get('act') . ' ' . $objPage->type . ' pages');
 
@@ -1710,6 +1710,9 @@ class tl_page extends Backend
 
 				// Create a new version
 				$objVersions->create();
+
+				// Update the record stored in the page registry (see #6542)
+				PageModel::findByPk($id)->alias = $strAlias;
 			}
 
 			$this->redirect($this->getReferer());
