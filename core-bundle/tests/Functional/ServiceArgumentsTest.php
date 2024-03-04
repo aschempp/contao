@@ -93,7 +93,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
                 continue;
             }
 
-            if ('@.inner' === $argument || str_ends_with($argument, '.inner')) {
+            if ($type instanceof \ReflectionNamedType && ('@.inner' === $argument || str_ends_with($argument, '.inner'))) {
                 $this->assertTrue(is_a($config['class'], $type->getName(), true), sprintf('Argument %s of %s should be %s but found %s.', $i, $serviceId, $type->getName(), $config['class']));
                 continue;
             }
@@ -109,7 +109,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
                     continue;
                 }
 
-                if (null === $type) {
+                if (!$type instanceof \ReflectionNamedType) {
                     $this->addWarning(sprintf('Cannot validate parameter %s of service %s', $i, $serviceId));
                     continue;
                 }
