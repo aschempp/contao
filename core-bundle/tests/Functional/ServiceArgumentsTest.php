@@ -33,14 +33,14 @@ class ServiceArgumentsTest extends FunctionalTestCase
         $container = $this->getContainer();
 
         if (!$container->has($serviceId)) {
-            $this->addWarning('Service '.$serviceId.' was removed');
+            $this->addWarning(sprintf('Service "%s" was removed.', $serviceId));
 
             return;
         }
 
         $ref = new \ReflectionClass($config['class']);
 
-        if (null === ($constructor = $ref->getConstructor())) {
+        if (!$constructor = $ref->getConstructor()) {
             $this->assertNull($constructor);
 
             return;
@@ -57,6 +57,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
         foreach ($constructor->getParameters() as $i => $parameter) {
             if (!\array_key_exists($i, $arguments)) {
                 $this->assertTrue($parameter->isOptional(), sprintf('Missing argument %s on service ID "%s".', $i, $serviceId));
+
                 continue;
             }
 
@@ -73,28 +74,33 @@ class ServiceArgumentsTest extends FunctionalTestCase
 
             if ($argument instanceof TaggedValue) {
                 $this->addWarning('Cannot yet handle tagged values.');
+
                 continue;
             }
 
             if (!\is_string($argument)) {
                 if (!$type instanceof \ReflectionNamedType) {
-                    $this->addWarning(sprintf('Cannot validate argument %s of %s, it does not have a supported typehint.', $i, $serviceId));
+                    $this->addWarning(sprintf('Cannot validate argument %s of "%s", because it does not have a supported type hint.', $i, $serviceId));
+
                     continue;
                 }
 
-                $this->assertTrue($type->isBuiltin() ?? false, sprintf('Argument %s of %s should be a builtin type but is %s', $i, $serviceId, get_debug_type($argument)));
+                $this->assertTrue($type->isBuiltin() ?? false, sprintf('Argument %s of "%s" should be a built-in type, got "%s".', $i, $serviceId, get_debug_type($argument)));
 
                 if ('iterable' === $type->getName()) {
-                    $this->assertTrue(is_iterable($argument), sprintf('Argument %s of %s is not an iterable', $i, $serviceId));
+                    $this->assertTrue(is_iterable($argument), sprintf('Argument %s of "%s" is not an iterable.', $i, $serviceId));
+
                     continue;
                 }
 
                 $this->assertSame($type->getName(), get_debug_type($argument));
+
                 continue;
             }
 
             if ($type instanceof \ReflectionNamedType && ('@.inner' === $argument || str_ends_with($argument, '.inner'))) {
-                $this->assertTrue(is_a($config['class'], $type->getName(), true), sprintf('Argument %s of %s should be %s but found %s.', $i, $serviceId, $type->getName(), $config['class']));
+                $this->assertTrue(is_a($config['class'], $type->getName(), true), sprintf('Argument %s of "%s" should be "%s", got "%s".', $i, $serviceId, $type->getName(), $config['class']));
+
                 continue;
             }
 
@@ -103,18 +109,19 @@ class ServiceArgumentsTest extends FunctionalTestCase
                 $service = $container->get(substr($argument, $optional ? 2 : 1), ContainerInterface::NULL_ON_INVALID_REFERENCE);
 
                 if (null === $service) {
-                    $this->assertTrue($optional, sprintf('Unknown service %s for argument %s of "%s"', $argument, $i, $serviceId));
-                    $this->assertTrue($parameter->allowsNull(), sprintf('Argument %s of %s does not allow NULL but the service %s was not found', $i, $serviceId, $argument));
+                    $this->assertTrue($optional, sprintf('Unknown service "%s" for argument %s of "%s".', $argument, $i, $serviceId));
+                    $this->assertTrue($parameter->allowsNull(), sprintf('Argument %s of "%s" does not allow NULL but the service "%s" was not found.', $i, $serviceId, $argument));
 
                     continue;
                 }
 
                 if (!$type instanceof \ReflectionNamedType) {
-                    $this->addWarning(sprintf('Cannot validate parameter %s of service %s', $i, $serviceId));
+                    $this->addWarning(sprintf('Cannot validate argument %s of "%s", because it does not have a supported type hint.', $i, $serviceId));
+
                     continue;
                 }
 
-                $this->assertInstanceOf($type->getName(), $service, sprintf('Argument %s of %s should be %s but found %s.', $i, $serviceId, $type->getName(), \get_class($service)));
+                $this->assertInstanceOf($type->getName(), $service, sprintf('Argument %s of "%s" should be "%s", got "%s".', $i, $serviceId, $type->getName(), \get_class($service)));
             }
 
             // TODO: handle parameters
