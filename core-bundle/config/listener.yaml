@@ -98,6 +98,7 @@ services:
             - '@contao.framework'
             - '@security.helper'
             - '@database_connection'
+            - '%kernel.project_dir%'
 
     contao.listener.data_container.description_list_label:
         class: Contao\CoreBundle\EventListener\DataContainer\DescriptionListLabelListener

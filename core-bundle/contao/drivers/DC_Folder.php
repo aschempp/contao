@@ -21,6 +21,7 @@ use Contao\CoreBundle\Security\DataContainer\CreateAction;
 use Contao\CoreBundle\Security\DataContainer\DeleteAction;
 use Contao\CoreBundle\Security\DataContainer\ReadAction;
 use Contao\CoreBundle\Security\DataContainer\UpdateAction;
+use Contao\CoreBundle\Security\DataContainer\UploadAction;
 use Contao\CoreBundle\Util\SymlinkUtil;
 use Contao\Image\PictureConfiguration;
 use Contao\Image\PictureConfigurationItem;
@@ -2073,6 +2074,8 @@ class DC_Folder extends DataContainer implements ListableDataContainerInterface,
 				{
 					$strSource = gzencode($strSource);
 				}
+
+				$this->denyAccessUnlessGranted(ContaoCorePermissions::DC_PREFIX.$this->strTable, new UploadAction($this->strTable, $this->getCurrentRecord(), $strSource));
 
 				// Write the file
 				$objFile->write($strSource);

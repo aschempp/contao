@@ -890,6 +890,12 @@ services:
     contao.security.data_container.favorites_voter:
         class: Contao\CoreBundle\Security\Voter\DataContainer\FavoritesVoter
 
+    contao.security.data_container.files_access_voter:
+        class: Contao\CoreBundle\Security\Voter\DataContainer\FilesAccessVoter
+        arguments:
+            - '@security.access.decision_manager'
+            - '%kernel.project_dir%'
+
     contao.security.data_container.form_access_voter:
         class: Contao\CoreBundle\Security\Voter\DataContainer\FormAccessVoter
         arguments:

@@ -21,9 +21,12 @@ use Contao\CoreBundle\Security\DataContainer\CreateAction;
 use Contao\CoreBundle\Security\DataContainer\DeleteAction;
 use Contao\CoreBundle\Security\DataContainer\ReadAction;
 use Contao\CoreBundle\Security\DataContainer\UpdateAction;
+use Contao\CoreBundle\Security\DataContainer\UploadAction;
 use Contao\DataContainer;
+use Contao\DC_Folder;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Filesystem\Path;
 
 /**
  * @internal
@@ -35,6 +38,7 @@ class DefaultOperationsListener
         private readonly ContaoFramework $framework,
         private readonly Security $security,
         private readonly Connection $connection,
+        private readonly string $projectDir,
     ) {
     }
 
@@ -82,6 +86,7 @@ class DefaultOperationsListener
         $operations = [];
 
         $isTreeMode = DataContainer::MODE_TREE === ($GLOBALS['TL_DCA'][$table]['list']['sorting']['mode'] ?? null);
+        $isDcFolder = \is_a(DataContainer::getDriverForTable($table), DC_Folder::class, true);
         $hasPtable = !empty($GLOBALS['TL_DCA'][$table]['config']['ptable'] ?? null);
         $ctable = $GLOBALS['TL_DCA'][$table]['config']['ctable'][0] ?? null;
 
@@ -114,13 +119,13 @@ class DefaultOperationsListener
             }
         }
 
-        if ($hasPtable || $isTreeMode) {
+        if ($hasPtable || $isTreeMode || $isDcFolder) {
             if ($canCopy) {
                 $operations['copy'] = [
                     'href' => 'act=paste&amp;mode=copy',
                     'icon' => 'copy.svg',
                     'attributes' => 'data-action="contao--scroll-offset#store"',
-                    'button_callback' => $this->isGrantedCallback(CreateAction::class, $table, ['sorting' => null]),
+                    'button_callback' => $this->isGrantedCallback(CreateAction::class, $table, $isDcFolder ? ['pid' => null] : ['sorting' => null]),
                 ];
 
                 if ($isTreeMode) {
@@ -133,12 +138,12 @@ class DefaultOperationsListener
                 }
             }
 
-            if ($canSort) {
+            if ($canSort || $isDcFolder) {
                 $operations['cut'] = [
                     'href' => 'act=paste&amp;mode=cut',
                     'icon' => 'cut.svg',
                     'attributes' => 'data-action="contao--scroll-offset#store"',
-                    'button_callback' => $this->isGrantedCallback(UpdateAction::class, $table, ['sorting' => null]),
+                    'button_callback' => $this->isGrantedCallback(UpdateAction::class, $table, $isDcFolder ? ['pid' => null] : ['sorting' => null]),
                 ];
             }
         } elseif ($canCopy) {
@@ -167,12 +172,20 @@ class DefaultOperationsListener
             ];
         }
 
-        return $operations + [
-            'show' => [
-                'href' => 'act=show',
-                'icon' => 'show.svg',
-            ],
+        $operations['show'] = [
+            'href' => 'act=show',
+            'icon' => 'show.svg',
         ];
+
+        if ($isDcFolder) {
+            $operations['source'] = [
+                'href' => 'act=source',
+                'icon' => 'editor.svg',
+                'button_callback' => $this->sourceCallback($table),
+            ];
+        }
+
+        return $operations;
     }
 
     private function isGrantedCallback(string $actionClass, string $table, array|null $new = null): \Closure
@@ -223,6 +236,31 @@ class DefaultOperationsListener
         };
     }
 
+    private function sourceCallback(string $table): \Closure
+    {
+        return function (DataContainerOperation $operation) use ($table): void {
+            $path = rawurldecode($operation->getRecord()['id']);
+
+            if (is_dir($this->projectDir . '/' . $path)) {
+                $operation->setHtml('');
+
+                return;
+            }
+
+            $dc = $operation->getDataContainer();
+
+            if ($dc instanceof DC_Folder && !\in_array(Path::getExtension($path, true), $dc->editableFileTypes, true) && \is_file($this->projectDir.'/'.$path)) {
+                $operation->disable();
+
+                return;
+            }
+
+            if (!$this->isGranted(UploadAction::class, $table, $operation)) {
+                $operation->disable();
+            }
+        };
+    }
+
     private function toggleCallback(string $table, string $toggleField): \Closure
     {
         return function (DataContainerOperation $operation) use ($toggleField, $table): void {
@@ -266,6 +304,7 @@ class DefaultOperationsListener
             CreateAction::class => new CreateAction($table, array_replace($operation->getRecord(), (array) $new)),
             UpdateAction::class => new UpdateAction($table, $operation->getRecord(), $new),
             DeleteAction::class => new DeleteAction($table, $operation->getRecord()),
+            UploadAction::class => new UploadAction($table, $operation->getRecord()),
             default => throw new \InvalidArgumentException(sprintf('Invalid action class "%s".', $actionClass)),
         };
 

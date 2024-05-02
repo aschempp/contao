@@ -16,9 +16,8 @@ use Contao\CoreBundle\Security\ContaoCorePermissions;
 use Contao\CoreBundle\Security\DataContainer\CreateAction;
 use Contao\CoreBundle\Security\DataContainer\UpdateAction;
 use Contao\DataContainer;
-use Contao\DC_File;
+use Contao\DC_Table;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Security\Core\Authorization\AccessDecisionManagerInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\CacheableVoterInterface;
 
 /**
@@ -26,9 +25,7 @@ use Symfony\Component\Security\Core\Authorization\Voter\CacheableVoterInterface;
  */
 class TableAccessVoter implements CacheableVoterInterface
 {
-    public function __construct(private readonly AccessDecisionManagerInterface $accessDecisionManager)
-    {
-    }
+    use FieldsOfTableTrait;
 
     public function supportsAttribute(string $attribute): bool
     {
@@ -49,27 +46,13 @@ class TableAccessVoter implements CacheableVoterInterface
      */
     public function vote(TokenInterface $token, $subject, array $attributes): int
     {
-        foreach ($attributes as $attribute) {
-            if (!$this->supportsAttribute($attribute) || DC_File::class === DataContainer::getDriverForTable($subject->getDataSource())) {
-                continue;
-            }
-
-            $hasNotExcluded = false;
-
-            // Intentionally do not load DCA, it should already be loaded. If DCA is not
-            // loaded, the voter just always abstains because it can't decide.
-            foreach ($GLOBALS['TL_DCA'][$subject->getDataSource()]['fields'] ?? [] as $config) {
-                if (!($config['exclude'] ?? true)) {
-                    $hasNotExcluded = true;
-                    break;
-                }
-            }
-
-            if (!$hasNotExcluded && !$this->accessDecisionManager->decide($token, [ContaoCorePermissions::USER_CAN_EDIT_FIELDS_OF_TABLE], $subject->getDataSource())) {
-                return self::ACCESS_DENIED;
-            }
+        if (
+            !\is_a(DC_Table::class, DataContainer::getDriverForTable($subject->getDataSource(), true))
+            || !array_filter($attributes, $this->supportsAttribute(...))
+        ) {
+            return self::ACCESS_ABSTAIN;
         }
 
-        return self::ACCESS_ABSTAIN;
+        return $this->canEditFieldsOfTable($token, $subject->getDataSource()) ? self::ACCESS_ABSTAIN : self::ACCESS_DENIED;
     }
 }
