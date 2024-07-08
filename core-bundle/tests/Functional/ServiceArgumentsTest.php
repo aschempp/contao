@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Contao\CoreBundle\Tests\Functional;
 
 use Contao\TestCase\FunctionalTestCase;
+use Psr\Container\ContainerInterface as PsrContainerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Tag\TaggedValue;
@@ -33,17 +34,13 @@ class ServiceArgumentsTest extends FunctionalTestCase
         $container = $this->getContainer();
 
         if (!$container->has($serviceId)) {
-            $this->addWarning(sprintf('Service "%s" was removed.', $serviceId));
-
-            return;
+            $this->markTestSkipped(sprintf('Service "%s" was removed.', $serviceId));
         }
 
         $ref = new \ReflectionClass($config['class']);
 
         if (!$constructor = $ref->getConstructor()) {
-            $this->assertNull($constructor);
-
-            return;
+            $this->markTestSkipped(sprintf('Service %s does not have a constructor method', $serviceId));
         }
 
         $arguments = $config['arguments'] ?? [];
@@ -66,22 +63,36 @@ class ServiceArgumentsTest extends FunctionalTestCase
 
             if (null === $argument) {
                 if (!$parameter->allowsNull()) {
-                    $this->addWarning(sprintf('Argument %s of %s does not allow NULL, assuming this parameter is set at runtime.', $i, $serviceId));
+                    $this->addWarning(sprintf('Argument %s ($%s) of %s does not allow NULL, assuming this parameter is set at runtime.', $i, $parameter->getName(), $serviceId));
                 }
 
                 continue;
             }
 
             if ($argument instanceof TaggedValue) {
-                $this->addWarning('Cannot yet handle tagged values.');
+                switch ($argument->getTag()) {
+                    case 'service_closure':
+                        $this->assertSame('Closure', $type->getName(), sprintf('Argument %s of %s should be \Closure but found %s.', $i, $serviceId, $type->getName()));
+                        break;
 
+                    case 'tagged_iterator':
+                        $this->assertSame('iterable', $type->getName(), sprintf('Argument %s of %s is not an iterable', $i, $serviceId));
+                        break;
+
+                    case 'tagged_locator':
+                    case 'service_locator':
+                        $this->assertSame(PsrContainerInterface::class, $type->getName(), sprintf('Argument %s of %s should be %s but found %s.', $i, $serviceId, PsrContainerInterface::class, $type->getName()));
+                        break;
+
+                    default:
+                        $this->addWarning(sprintf('Unknown tagged type "%s" for argument %s ($%s) of service %s.', $parameter->getType(), $i, $parameter->getName(), $serviceId));
+                }
                 continue;
             }
 
             if (!\is_string($argument)) {
                 if (!$type instanceof \ReflectionNamedType) {
-                    $this->addWarning(sprintf('Cannot validate argument %s of "%s", because it does not have a supported type hint.', $i, $serviceId));
-
+                    // cannot validate argument without known type
                     continue;
                 }
 
@@ -93,8 +104,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
                     continue;
                 }
 
-                $this->assertSame($type->getName(), get_debug_type($argument));
-
+                $this->assertSame(get_debug_type($argument), $type->getName());
                 continue;
             }
 
@@ -116,8 +126,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
                 }
 
                 if (!$type instanceof \ReflectionNamedType) {
-                    $this->addWarning(sprintf('Cannot validate argument %s of "%s", because it does not have a supported type hint.', $i, $serviceId));
-
+                    // cannot validate argument without known type
                     continue;
                 }
 
