@@ -391,39 +391,43 @@ class DC_Folder extends DataContainer implements ListableDataContainerInterface,
 			}
 			else
 			{
+				$isBasePath = static function (string $path, array $basePaths)
+				{
+					foreach ($basePaths as $basePath)
+					{
+						if (Path::isBasePath($basePath, $path))
+						{
+							return true;
+						}
+					}
+
+					return false;
+				};
+
 				$arrRoot = array();
+				$root = $GLOBALS['TL_DCA'][$this->strTable]['list']['sorting']['root'] ?? null;
+				$checkFilemounts = !empty($this->arrFilemounts) || null !== $root;
 
-				// Respect existing limitations (root IDs)
-				if (\is_array($GLOBALS['TL_DCA'][$this->strTable]['list']['sorting']['root'] ?? null))
+				while ($objRoot->next())
 				{
-					while ($objRoot->next())
+					// Respect given filemounts, e.g. set in the initPicker() method
+					if ($checkFilemounts && !$isBasePath($objRoot->path, $this->arrFilemounts))
 					{
-						foreach ($GLOBALS['TL_DCA'][$this->strTable]['list']['sorting']['root'] as $root)
-						{
-							if (strncmp($root . '/', $objRoot->path . '/', \strlen($root) + 1) === 0)
-							{
-								if ($objRoot->type == 'folder' || empty($this->arrValidFileTypes) || \in_array($objRoot->extension, $this->arrValidFileTypes))
-								{
-									$arrFound[] = $objRoot->path;
-								}
-
-								$arrRoot[] = ($objRoot->type == 'folder') ? $objRoot->path : \dirname($objRoot->path);
-								continue 2;
-							}
-						}
+						continue;
 					}
-				}
-				else
-				{
-					while ($objRoot->next())
+
+					// Respect existing limitations (root IDs)
+					if (\is_array($root) && !$isBasePath($objRoot->path, $root))
 					{
-						if ($objRoot->type == 'folder' || empty($this->arrValidFileTypes) || \in_array($objRoot->extension, $this->arrValidFileTypes))
-						{
-							$arrFound[] = $objRoot->path;
-						}
-
-						$arrRoot[] = ($objRoot->type == 'folder') ? $objRoot->path : \dirname($objRoot->path);
+						continue;
 					}
+
+					if ($objRoot->type == 'folder' || empty($this->arrValidFileTypes) || \in_array($objRoot->extension, $this->arrValidFileTypes))
+					{
+						$arrFound[] = $objRoot->path;
+					}
+
+					$arrRoot[] = ($objRoot->type == 'folder') ? $objRoot->path : \dirname($objRoot->path);
 				}
 
 				$this->arrFilemounts = $this->eliminateNestedPaths(array_unique($arrRoot));
@@ -597,7 +601,7 @@ class DC_Folder extends DataContainer implements ListableDataContainerInterface,
 			$return .= '<script>'
 				. 'Dropzone.autoDiscover = false;'
 				. 'Backend.enableFileTreeUpload("tl_listing", ' . json_encode(array(
-					'url' => html_entity_decode($this->addToUrl('act=move&mode=2&pid=' . urlencode($GLOBALS['TL_DCA'][$this->strTable]['list']['sorting']['root'][0] ?? $this->strUploadPath))),
+					'url' => html_entity_decode($this->addToUrl('act=move&mode=2&pid=' . urlencode($GLOBALS['TL_DCA'][$this->strTable]['list']['sorting']['root'][0] ?? $this->strUploadPath)), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5),
 					'paramName' => 'files',
 					'maxFilesize' => $intMaxSize,
 					'acceptedFiles' => $strAccepted,
@@ -611,7 +615,7 @@ class DC_Folder extends DataContainer implements ListableDataContainerInterface,
 
 		$return .= '<script>'
 			. 'Backend.enableFileTreeDragAndDrop($("tl_listing").getChildren(".tl_file_manager")[0], ' . json_encode(array(
-				'url' => html_entity_decode($this->addToUrl('act=cut&mode=2&pid=' . urlencode($GLOBALS['TL_DCA'][$this->strTable]['list']['sorting']['root'][0] ?? $this->strUploadPath))),
+				'url' => html_entity_decode($this->addToUrl('act=cut&mode=2&pid=' . urlencode($GLOBALS['TL_DCA'][$this->strTable]['list']['sorting']['root'][0] ?? $this->strUploadPath)), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5),
 			)) . ')</script>'
 		;
 
@@ -657,7 +661,7 @@ class DC_Folder extends DataContainer implements ListableDataContainerInterface,
 		$objSession->set('CLIPBOARD', $arrClipboard);
 
 		$this->Files->mkdir($strFolder . '/__new__');
-		$this->redirect(html_entity_decode($this->switchToEdit($strFolder . '/__new__')));
+		$this->redirect(html_entity_decode($this->switchToEdit($strFolder . '/__new__'), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5));
 	}
 
 	/**
@@ -2153,7 +2157,7 @@ class DC_Folder extends DataContainer implements ListableDataContainerInterface,
 <div class="tl_tbox">
   <div class="widget">
     <h3><label for="ctrl_source">' . $GLOBALS['TL_LANG']['tl_files']['editor'][0] . '</label></h3>
-    <textarea name="source" id="ctrl_source" class="tl_textarea monospace" rows="12" cols="80" style="height:400px" onfocus="Backend.getScrollOffset()">' . "\n" . htmlspecialchars($strContent) . '</textarea>' . ((Config::get('showHelp') && isset($GLOBALS['TL_LANG']['tl_files']['editor'][1])) ? '
+    <textarea name="source" id="ctrl_source" class="tl_textarea monospace" rows="12" cols="80" style="height:400px" onfocus="Backend.getScrollOffset()">' . "\n" . htmlspecialchars($strContent, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5) . '</textarea>' . ((Config::get('showHelp') && isset($GLOBALS['TL_LANG']['tl_files']['editor'][1])) ? '
     <p class="tl_help tl_tip">' . $GLOBALS['TL_LANG']['tl_files']['editor'][1] . '</p>' : '') . '
   </div>
 </div>
@@ -2698,7 +2702,7 @@ class DC_Folder extends DataContainer implements ListableDataContainerInterface,
 				$blnIsOpen = true;
 			}
 
-			$return .= "\n  " . '<li data-id="' . htmlspecialchars($currentFolder, ENT_QUOTES) . '" class="tl_folder click2edit toggle_select hover-div"><div class="tl_left" style="padding-left:' . ($intMargin + (($countFiles < 1) ? 20 : 0)) . 'px">';
+			$return .= "\n  " . '<li data-id="' . htmlspecialchars($currentFolder, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5) . '" class="tl_folder click2edit toggle_select hover-div"><div class="tl_left" style="padding-left:' . ($intMargin + (($countFiles < 1) ? 20 : 0)) . 'px">';
 
 			// Add a toggle button if there are childs
 			if ($countFiles > 0)
@@ -2801,7 +2805,7 @@ class DC_Folder extends DataContainer implements ListableDataContainerInterface,
 			}
 
 			$currentEncoded = $this->urlEncode($currentFile);
-			$return .= "\n  " . '<li data-id="' . htmlspecialchars($currentFile, ENT_QUOTES) . '" class="tl_file click2edit toggle_select hover-div"><div class="tl_left" style="padding-left:' . ($intMargin + $intSpacing) . 'px">';
+			$return .= "\n  " . '<li data-id="' . htmlspecialchars($currentFile, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5) . '" class="tl_file click2edit toggle_select hover-div"><div class="tl_left" style="padding-left:' . ($intMargin + $intSpacing) . 'px">';
 			$thumbnail .= ' <span class="tl_gray">(' . $this->getReadableSize($objFile->filesize);
 
 			if ($objFile->width && $objFile->height)
@@ -3103,12 +3107,39 @@ class DC_Folder extends DataContainer implements ListableDataContainerInterface,
 				throw new \RuntimeException('Invalid path ' . $strPath);
 			}
 
+			if (empty($this->arrFilemounts) && null === ($GLOBALS['TL_DCA'][$this->strTable]['list']['sorting']['root'] ?? null))
+			{
+				$this->arrFilemounts = array($strPath);
+			}
+			else
+			{
+				foreach ($this->arrFilemounts as $i => $strFolder)
+				{
+					// Unset all file mounts outside the path
+					if (!Path::isBasePath($strPath, $strFolder))
+					{
+						unset($this->arrFilemounts[$i]);
+					}
+
+					// If the path is inside a valid file mount, unset all file
+					// mounts and fall back to the path itself (see #856 and #6412)
+					if (Path::isBasePath($strFolder, $strPath))
+					{
+						$this->arrFilemounts = array($strPath);
+						break;
+					}
+				}
+			}
+
+			// Make sure indexes start with zero
+			$this->arrFilemounts = array_values($this->arrFilemounts);
+
 			$strNode = System::getContainer()->get('session')->getBag('contao_backend')->get('tl_files_node');
 
-			// If the files node is not within the current path, remove it (see #856)
-			if ($strNode && ($i = array_search($strNode, $this->arrFilemounts)) !== false && strncmp($strNode . '/', $strPath . '/', \strlen($strPath) + 1) !== 0)
+			// Hide the breadcrumb if the files node is not mounted
+			if ($strNode && $this->arrFilemounts && !\in_array($strNode, $this->arrFilemounts))
 			{
-				unset($this->arrFilemounts[$i], $GLOBALS['TL_DCA']['tl_files']['list']['sorting']['breadcrumb']);
+				unset($GLOBALS['TL_DCA']['tl_files']['list']['sorting']['breadcrumb']);
 			}
 
 			// Allow only those roots that are allowed in root nodes
@@ -3118,7 +3149,7 @@ class DC_Folder extends DataContainer implements ListableDataContainerInterface,
 
 				foreach ($this->arrFilemounts as $strFolder)
 				{
-					if (0 === strpos($strPath, $strFolder))
+					if (Path::isBasePath($strPath, $strFolder))
 					{
 						$blnValid = true;
 						break;
@@ -3127,11 +3158,9 @@ class DC_Folder extends DataContainer implements ListableDataContainerInterface,
 
 				if (!$blnValid)
 				{
-					$strPath = '';
+					$this->arrFilemounts = array();
 				}
 			}
-
-			$this->arrFilemounts = array($strPath);
 		}
 
 		if (isset($attributes['extensions']))

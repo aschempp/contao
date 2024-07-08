@@ -227,7 +227,7 @@ class InsertTags extends Controller
 							$attributes,
 							array('clientCache' => (int) ($objPage->clientCache ?? 0), 'pageId' => ($objPage->id ?? null), 'request' => Environment::get('request'))
 						),
-						'esi',
+						$tag == 'date::Y' ? 'inline' : 'esi',
 						array('ignore_errors'=>false) // see #48
 					);
 
@@ -571,6 +571,8 @@ class InsertTags extends Controller
 										}
 										catch (ExceptionInterface $exception)
 										{
+											$arrCache[$strTag] = '';
+											break 2;
 										}
 										break;
 									}
@@ -583,6 +585,8 @@ class InsertTags extends Controller
 									}
 									catch (ExceptionInterface $exception)
 									{
+										$arrCache[$strTag] = '';
+										break 2;
 									}
 									break;
 							}
@@ -856,11 +860,11 @@ class InsertTags extends Controller
 						switch ($elements[1])
 						{
 							case 'pageTitle':
-								$arrCache[$strTag] = htmlspecialchars($htmlHeadBag->getTitle());
+								$arrCache[$strTag] = htmlspecialchars($htmlHeadBag->getTitle(), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5);
 								break;
 
 							case 'description':
-								$arrCache[$strTag] = htmlspecialchars($htmlHeadBag->getMetaDescription());
+								$arrCache[$strTag] = htmlspecialchars($htmlHeadBag->getMetaDescription(), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5);
 								break;
 						}
 					}

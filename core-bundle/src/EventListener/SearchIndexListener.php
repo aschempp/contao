@@ -51,17 +51,22 @@ class SearchIndexListener
         }
 
         $request = $event->getRequest();
+
+        // Only handle GET requests (see #1194, #7240)
+        if (!$request->isMethod(Request::METHOD_GET)) {
+            return;
+        }
+
         $document = Document::createFromRequestResponse($request, $response);
         $needsIndex = $this->needsIndex($request, $response, $document);
+        $needsDelete = $this->needsDelete($response, $document);
 
         try {
-            $success = $event->getResponse()->isSuccessful();
-
-            if ($needsIndex && $success && $this->enabledFeatures & self::FEATURE_INDEX) {
+            if ($needsIndex && $this->enabledFeatures & self::FEATURE_INDEX) {
                 $this->indexer->index($document);
             }
 
-            if (!$success && $this->enabledFeatures & self::FEATURE_DELETE) {
+            if ($needsDelete && $this->enabledFeatures & self::FEATURE_DELETE) {
                 $this->indexer->delete($document);
             }
         } catch (IndexerException $e) {
@@ -71,8 +76,8 @@ class SearchIndexListener
 
     private function needsIndex(Request $request, Response $response, Document $document): bool
     {
-        // Only handle GET requests (see #1194)
-        if (!$request->isMethod(Request::METHOD_GET)) {
+        // Do not index if response was not successful
+        if (!$response->isSuccessful()) {
             return false;
         }
 
@@ -106,5 +111,37 @@ class SearchIndexListener
 
         // If there are no json ld scripts at all, this should not be handled by our indexer
         return 0 !== \count($lds);
+    }
+
+    private function needsDelete(Response $response, Document $document): bool
+    {
+        // Always delete on 404 and 410 responses
+        if (\in_array($response->getStatusCode(), [Response::HTTP_NOT_FOUND, Response::HTTP_GONE], true)) {
+            return true;
+        }
+
+        // Do not delete if the response was not successful
+        if (!$response->isSuccessful()) {
+            return false;
+        }
+
+        // Delete if the X-Robots-Tag header contains "noindex"
+        if (false !== strpos($response->headers->get('X-Robots-Tag', ''), 'noindex')) {
+            return true;
+        }
+
+        try {
+            $robots = $document->getContentCrawler()->filterXPath('//head/meta[@name="robots"]')->first()->attr('content');
+
+            // Delete if the meta robots tag contains "noindex"
+            if (false !== strpos($robots, 'noindex')) {
+                return true;
+            }
+        } catch (\Exception $e) {
+            // No meta robots tag found
+        }
+
+        // Otherwise do not delete
+        return false;
     }
 }
