@@ -19,7 +19,7 @@ class SimpleTokenExpressionLanguage extends ExpressionLanguage
 {
     public function __construct(CacheItemPoolInterface $cache = null, iterable $taggedProviders = null)
     {
-        $providers = $taggedProviders instanceof \Traversable ? iterator_to_array($taggedProviders) : $taggedProviders ?? null;
+        $providers = $taggedProviders instanceof \Traversable ? iterator_to_array($taggedProviders) : $taggedProviders ?? [];
 
         parent::__construct($cache, $providers);
 
