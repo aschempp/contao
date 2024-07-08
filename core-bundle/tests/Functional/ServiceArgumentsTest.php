@@ -60,6 +60,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
 
             $argument = $arguments[$i];
             $type = $parameter->getType();
+            $typeName = $type instanceof \ReflectionNamedType ? $type->getName() : null;
 
             if (null === $argument) {
                 if (!$parameter->allowsNull()) {
@@ -72,21 +73,22 @@ class ServiceArgumentsTest extends FunctionalTestCase
             if ($argument instanceof TaggedValue) {
                 switch ($argument->getTag()) {
                     case 'service_closure':
-                        $this->assertSame('Closure', $type->getName(), sprintf('Argument %s of %s should be \Closure but found %s.', $i, $serviceId, $type->getName()));
+                        $this->assertSame('Closure', $typeName, sprintf('Argument %s of %s should be \Closure but found %s.', $i, $serviceId, $typeName));
                         break;
 
                     case 'tagged_iterator':
-                        $this->assertSame('iterable', $type->getName(), sprintf('Argument %s of %s is not an iterable', $i, $serviceId));
+                        $this->assertSame('iterable', $typeName, sprintf('Argument %s of %s is not an iterable', $i, $serviceId));
                         break;
 
                     case 'tagged_locator':
                     case 'service_locator':
-                        $this->assertSame(PsrContainerInterface::class, $type->getName(), sprintf('Argument %s of %s should be %s but found %s.', $i, $serviceId, PsrContainerInterface::class, $type->getName()));
+                        $this->assertSame(PsrContainerInterface::class, $typeName, sprintf('Argument %s of %s should be %s but found %s.', $i, $serviceId, PsrContainerInterface::class, $typeName));
                         break;
 
                     default:
                         $this->addWarning(sprintf('Unknown tagged type "%s" for argument %s ($%s) of service %s.', $parameter->getType(), $i, $parameter->getName(), $serviceId));
                 }
+
                 continue;
             }
 
@@ -98,18 +100,18 @@ class ServiceArgumentsTest extends FunctionalTestCase
 
                 $this->assertTrue($type->isBuiltin() ?? false, sprintf('Argument %s of "%s" should be a built-in type, got "%s".', $i, $serviceId, get_debug_type($argument)));
 
-                if ('iterable' === $type->getName()) {
+                if ('iterable' === $typeName) {
                     $this->assertTrue(is_iterable($argument), sprintf('Argument %s of "%s" is not an iterable.', $i, $serviceId));
 
                     continue;
                 }
 
-                $this->assertSame(get_debug_type($argument), $type->getName());
+                $this->assertSame(get_debug_type($argument), $typeName);
                 continue;
             }
 
             if ($type instanceof \ReflectionNamedType && ('@.inner' === $argument || str_ends_with($argument, '.inner'))) {
-                $this->assertTrue(is_a($config['class'], $type->getName(), true), sprintf('Argument %s of "%s" should be "%s", got "%s".', $i, $serviceId, $type->getName(), $config['class']));
+                $this->assertTrue(is_a($config['class'], $typeName, true), sprintf('Argument %s of "%s" should be "%s", got "%s".', $i, $serviceId, $typeName, $config['class']));
 
                 continue;
             }
@@ -130,7 +132,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
                     continue;
                 }
 
-                $this->assertInstanceOf($type->getName(), $service, sprintf('Argument %s of "%s" should be "%s", got "%s".', $i, $serviceId, $type->getName(), \get_class($service)));
+                $this->assertInstanceOf($typeName, $service, sprintf('Argument %s of "%s" should be "%s", got "%s".', $i, $serviceId, $typeName, \get_class($service)));
             }
 
             // TODO: handle parameters
