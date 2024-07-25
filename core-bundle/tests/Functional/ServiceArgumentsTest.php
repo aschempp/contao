@@ -26,10 +26,44 @@ class ServiceArgumentsTest extends FunctionalTestCase
         static::bootKernel();
     }
 
-    /**
-     * @dataProvider serviceProvider
-     */
-    public function testServices(string $serviceId, array $config, ContainerInterface $container): void
+    public function testServices(): void
+    {
+        $container = $this->getContainer();
+
+        $files = Finder::create()
+            ->files()
+            ->name('*.yaml')
+            ->name('*.yml')
+            ->path('src/Resources/config')
+            ->in(\dirname(__DIR__, 3))
+        ;
+
+        foreach ($files as $file) {
+            $yaml = Yaml::parseFile($file->getPathname(), Yaml::PARSE_CUSTOM_TAGS);
+
+            if (!isset($yaml['services'])) {
+                continue;
+            }
+
+            foreach ($yaml['services'] as $serviceId => $config) {
+                if ('_' === $serviceId[0]) {
+                    continue;
+                }
+
+                if (!isset($config['class'])) {
+                    continue;
+                }
+
+                if (!$container->has($serviceId)) {
+                    continue;
+                }
+
+                $this->doTestService($serviceId, $config, $container);
+            }
+        }
+    }
+
+    private function doTestService(string $serviceId, array $config, ContainerInterface $container): void
     {
         $ref = new \ReflectionClass($config['class']);
 
@@ -130,43 +164,6 @@ class ServiceArgumentsTest extends FunctionalTestCase
             }
 
             // TODO: handle parameters
-        }
-    }
-
-    public function serviceProvider(): \Generator
-    {
-        $container = $this->getContainer();
-
-        $files = Finder::create()
-            ->files()
-            ->name('*.yaml')
-            ->name('*.yml')
-            ->path('src/Resources/config')
-            ->in(\dirname(__DIR__, 3))
-        ;
-
-        foreach ($files as $file) {
-            $yaml = Yaml::parseFile($file->getPathname(), Yaml::PARSE_CUSTOM_TAGS);
-
-            if (!isset($yaml['services'])) {
-                continue;
-            }
-
-            foreach ($yaml['services'] as $serviceId => $config) {
-                if ('_' === $serviceId[0]) {
-                    continue;
-                }
-
-                if (!isset($config['class'])) {
-                    continue;
-                }
-
-                if (!$container->has($serviceId)) {
-                    continue;
-                }
-
-                yield [$serviceId, $config, $container];
-            }
         }
     }
 
