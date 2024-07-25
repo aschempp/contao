@@ -29,14 +29,8 @@ class ServiceArgumentsTest extends FunctionalTestCase
     /**
      * @dataProvider serviceProvider
      */
-    public function testServices(string $serviceId, array $config): void
+    public function testServices(string $serviceId, array $config, ContainerInterface $container): void
     {
-        $container = $this->getContainer();
-
-        if (!$container->has($serviceId)) {
-            $this->markTestSkipped(sprintf('Service "%s" was removed.', $serviceId));
-        }
-
         $ref = new \ReflectionClass($config['class']);
 
         if (!$constructor = $ref->getConstructor()) {
@@ -141,6 +135,8 @@ class ServiceArgumentsTest extends FunctionalTestCase
 
     public function serviceProvider(): \Generator
     {
+        $container = $this->getContainer();
+
         $files = Finder::create()
             ->files()
             ->name('*.yaml')
@@ -165,7 +161,11 @@ class ServiceArgumentsTest extends FunctionalTestCase
                     continue;
                 }
 
-                yield [$serviceId, $config];
+                if (!$container->has($serviceId)) {
+                    continue;
+                }
+
+                yield [$serviceId, $config, $container];
             }
         }
     }
