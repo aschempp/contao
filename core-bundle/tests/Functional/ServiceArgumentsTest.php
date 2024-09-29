@@ -114,7 +114,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
                         break;
 
                     default:
-                        $this->addWarning(sprintf('Unknown tagged type "%s" for argument %s ($%s) of service %s.', $parameter->getType(), $i, $parameter->getName(), $serviceId));
+                        $this->fail(sprintf('Unknown tagged type "%s" for argument %s ($%s) of service %s.', $parameter->getType(), $i, $parameter->getName(), $serviceId));
                 }
 
                 continue;
