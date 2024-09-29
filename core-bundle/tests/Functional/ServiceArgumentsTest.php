@@ -58,25 +58,23 @@ class ServiceArgumentsTest extends FunctionalTestCase
                     continue;
                 }
 
-                $this->doTestService($serviceId, $config, $container);
+                $ref = new \ReflectionClass($config['class']);
+
+                if (!$constructor = $ref->getConstructor()) {
+                    continue;
+                }
+
+                $this->doTestService($serviceId, $config['class'], $constructor, $config['arguments'] ?? [], $container);
             }
         }
     }
 
-    private function doTestService(string $serviceId, array $config, ContainerInterface $container): void
+    private function doTestService(string $serviceId, string $class, \ReflectionMethod $constructor, array $arguments, ContainerInterface $container): void
     {
-        $ref = new \ReflectionClass($config['class']);
-
-        if (!$constructor = $ref->getConstructor()) {
-            $this->markTestSkipped(sprintf('Service %s does not have a constructor method', $serviceId));
-        }
-
-        $arguments = $config['arguments'] ?? [];
-
         $this->assertGreaterThanOrEqual(
             $this->countRequiredParameters($constructor),
-            $config['arguments'] ?? [],
-            sprintf('Service %s does not have the necessary amount of parameters.', $serviceId)
+            $arguments,
+            sprintf('Service %s does not have the necessary amount of constructor arguments.', $serviceId)
         );
 
         foreach ($constructor->getParameters() as $i => $parameter) {
@@ -92,7 +90,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
 
             if (null === $argument) {
                 if (!$parameter->allowsNull()) {
-                    $this->addWarning(sprintf('Argument %s ($%s) of %s does not allow NULL, assuming this parameter is set at runtime.', $i, $parameter->getName(), $serviceId));
+                    $this->fail(sprintf('Argument %s ($%s) of %s does not allow NULL, use a valid type even if this argument is set at runtime.', $i, $parameter->getName(), $serviceId));
                 }
 
                 continue;
@@ -139,7 +137,7 @@ class ServiceArgumentsTest extends FunctionalTestCase
             }
 
             if ($type instanceof \ReflectionNamedType && ('@.inner' === $argument || str_ends_with($argument, '.inner'))) {
-                $this->assertTrue(is_a($config['class'], $typeName, true), sprintf('Argument %s of "%s" should be "%s", got "%s".', $i, $serviceId, $typeName, $config['class']));
+                $this->assertTrue(is_a($class, $typeName, true), sprintf('Argument %s of "%s" should be "%s", got "%s".', $i, $serviceId, $typeName, $class));
 
                 continue;
             }
