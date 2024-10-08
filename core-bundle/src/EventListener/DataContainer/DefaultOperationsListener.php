@@ -96,6 +96,7 @@ class DefaultOperationsListener
                     'href' => 'act=edit',
                     'icon' => 'edit.svg',
                     'button_callback' => $this->isGrantedCallback(UpdateAction::class, $table),
+                    'primary' => true,
                     'showInHeader' => true,
                 ],
             ];
@@ -110,6 +111,7 @@ class DefaultOperationsListener
                         'href' => 'table='.$ctable.($ctable === $table ? '&amp;ptable='.$table : ''),
                         'icon' => 'children.svg',
                         'button_callback' => $this->accessChildrenCallback($ctable, $table),
+                        'primary' => true,
                     ],
                 ];
             }
@@ -165,6 +167,7 @@ class DefaultOperationsListener
                 'icon' => 'visible.svg',
                 'showInHeader' => (bool) $ctable,
                 'button_callback' => $this->toggleCallback($table, $toggleField),
+                'primary' => true,
             ];
         }
 

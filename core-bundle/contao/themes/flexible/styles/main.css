@@ -1486,7 +1486,15 @@ table.tl_listing {
 	background: var(--table-header);
 }
 
-.tl_right button, .tl_content_right button {
+.tl_right > nav > ul,
+.tl_right_nowrap > nav > ul,
+.tl_content_right > nav > ul {
+	display: flex;
+	justify-content: flex-end;
+	gap: 3px;
+}
+
+.tl_right button, .tl_right_nowrap button, .tl_content_right button {
 	margin: 0;
 	padding: 0;
 	border: 0;
@@ -1497,6 +1505,57 @@ table.tl_listing {
 .tl_right img, .tl_content_right img, .tl_right_nowrap img,
 .tl_right button, .tl_content_right button, .tl_right_nowrap button {
 	margin-left: 1px;
+}
+
+.disclosuremenu-container {
+	position: relative;
+}
+
+.disclosuremenu,
+.contextmenu button {
+	display: none;
+}
+
+.disclosuremenu {
+	position: absolute;
+	right: 0;
+	top: 1.5em;
+	padding: 10px !important;
+	background: #fff !important;
+	border: 1px solid var(--border);
+	z-index: 10;
+	margin: 0;
+	list-style: none;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.disclosuremenu.show {
+	display: flex;
+}
+
+.disclosuremenu.contextmenu {
+	right: auto;
+	top: auto;
+}
+
+.disclosuremenu li {
+	display: flex;
+	align-items: center;
+}
+
+.disclosuremenu a {
+	display: block;
+}
+
+.disclosuremenu a:after {
+	content: attr(title);
+	padding-left: 5px;
+}
+
+.disclosuremenu a[data-original-title]:after {
+	content: attr(data-original-title);
+	padding-left: 5px;
 }
 
 .cte_type {
