@@ -18,6 +18,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\DriverException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Path;
+use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
 use Symfony\Component\Finder\Finder;
 
 class TemplateLocator
@@ -93,15 +94,15 @@ class TemplateLocator
      */
     public function findTemplates(string $path): array
     {
-        if (!is_dir($path)) {
+        try {
+            $finder = (new Finder())
+                ->files()
+                ->in($path)
+                ->name('/(\.twig|\.html5)$/')
+            ;
+        } catch (DirectoryNotFoundException) {
             return [];
         }
-
-        $finder = (new Finder())
-            ->files()
-            ->in($path)
-            ->name('/(\.twig|\.html5)$/')
-        ;
 
         if (!$this->isNamespaceRoot($path)) {
             $finder = $finder->depth('< 1');
