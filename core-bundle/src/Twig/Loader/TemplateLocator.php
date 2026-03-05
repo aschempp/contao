@@ -133,32 +133,27 @@ class TemplateLocator
 
         $namespaceRoots = [];
 
-        $finder = (new Finder())
-            ->directories()
-            ->in($path)
-            ->sortByName()
-            ->filter(
-                function (\SplFileInfo $info) use (&$namespaceRoots): bool {
-                    $path = $info->getPathname();
+        $indexFolder = function (string $folder) use (&$indexFolder, &$paths, &$namespaceRoots) {
+            $finder = (new Finder())
+                ->directories()
+                ->in($folder)
+                ->depth(0)
+                ->sortByName()
+            ;
 
-                    foreach ($namespaceRoots as $directory) {
-                        if (Path::isBasePath($directory, $path)) {
-                            return false;
-                        }
-                    }
+            foreach ($finder as $item) {
+                $path = $item->getPathname();
+                $paths[] = Path::canonicalize($path);
 
-                    if ($this->isNamespaceRoot($path)) {
-                        $namespaceRoots[] = $path;
-                    }
+                if ($this->isNamespaceRoot($path)) {
+                    $namespaceRoots[] = $path;
+                } else {
+                    $indexFolder($path);
+                }
+            }
+        };
 
-                    return true;
-                },
-            )
-        ;
-
-        foreach ($finder as $item) {
-            $paths[] = Path::canonicalize($item->getPathname());
-        }
+        $indexFolder($path);
 
         return $paths;
     }
