@@ -128,4 +128,28 @@ abstract class AbstractOperation extends AbstractController implements Operation
     {
         $this->getContaoFilesystemLoader()->warmUp(true);
     }
+
+    /**
+     * @internal
+     *
+     * @return array{0: string|null, 1: string|null}
+     */
+    protected function extractLegacyIdentifier(OperationContext $context): array
+    {
+        [$baseIdentifier, $subIdentifier, $oldFragment] = explode('_', $context->getIdentifier(), 3) + [null, null, null];
+
+        if (\in_array($baseIdentifier, ['be', 'block'])) {
+            return [null, null];
+        }
+
+        if (\in_array($baseIdentifier, ['ce', 'mod', 'form'], true)) {
+            $baseIdentifier .= '_'.$subIdentifier;
+        } elseif (null === $oldFragment) {
+            $oldFragment = $subIdentifier;
+        } else {
+            $oldFragment = $subIdentifier.'_'.$oldFragment;
+        }
+
+        return [$baseIdentifier, $oldFragment];
+    }
 }

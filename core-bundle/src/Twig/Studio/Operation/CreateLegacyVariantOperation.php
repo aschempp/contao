@@ -24,28 +24,32 @@ class CreateLegacyVariantOperation extends AbstractOperation
             return false;
         }
 
+        if (null === $this->extractLegacyIdentifier($context)[0]) {
+            return false;
+        }
+
         return !$this->userTemplateExists($context, true);
     }
 
     public function execute(Request $request, OperationContext $context): Response|null
     {
-        [$identifier] = explode('_', $context->getIdentifier(), 2);
+        [$baseIdentifier] = $this->extractLegacyIdentifier($context);
 
         // Show a confirmation dialog
         if (!$identifierFragment = $request->request->getString('identifier_fragment')) {
             return $this->render('@Contao/backend/template_studio/operation/create_or_rename_variant.stream.html.twig', [
                 'operation' => $this->getName(),
                 'operation_type' => 'create',
-                'identifier' => $identifier,
+                'identifier' => $baseIdentifier,
                 'extension' => $context->getExtension(),
                 'separator' => '_',
-                'suggested_identifier_fragment' => $this->suggestIdentifierFragmentName($identifier, $context->getExtension()),
-                'allowed_identifier_fragment_pattern' => $this->buildAllowedIdentifierFragmentsPattern($identifier, $context->getThemeSlug()),
+                'suggested_identifier_fragment' => $this->suggestIdentifierFragmentName($baseIdentifier, $context->getExtension()),
+                'allowed_identifier_fragment_pattern' => $this->buildAllowedIdentifierFragmentsPattern($baseIdentifier, $context->getThemeSlug()),
             ]);
         }
 
         // Do not allow creating subdirectories
-        $newIdentifier = str_replace('/', '-', "{$identifier}_$identifierFragment");
+        $newIdentifier = str_replace('/', '-', "{$baseIdentifier}_$identifierFragment");
         $newStoragePath = "$newIdentifier.{$context->getExtension()}";
 
         if ($this->getUserTemplatesStorage()->fileExists($newStoragePath)) {
